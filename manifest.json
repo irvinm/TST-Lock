@@ -13,5 +13,10 @@
   },
   "icons": {
     "128": "lock.png"
-  }
+  },
+	"applications": {
+		"gecko": {
+			"id": "TST-Lock@irvinm.addons.mozilla.org"
+		}
+	},
 }
