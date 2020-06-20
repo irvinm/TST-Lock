@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: prepare manifest.json with a revision number
-      run: |
+      run: 
         version=$(cat manifest.json | jq -r ".version" | sed -r -e "s/$/.$(git log --oneline | wc -l)/")
         cat manifest.json | jq ".version |= \"$version\"" > webextensions/manifest.json
     - name: build xpi
