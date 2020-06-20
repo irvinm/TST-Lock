@@ -2,10 +2,10 @@
   "browser_action": {
     "default_icon": "lock.png"
   },
-  "description": "Demonstration of some runtime APIs",
-  "homepage_url": "https://github.com/mdn/webextensions-examples/tree/master/runtime-examples",
+  "description": "Lock important tabs from being accidentally closed.",
+  "homepage_url": "https://github.com/irvinm/TST-Lock",
   "manifest_version": 2,
-  "name": "Runtime examples",
+  "name": "TST-Lock",
   "version": "1.0",
   "permissions": ["notifications"],
   "background": {
