@@ -12,7 +12,7 @@ function registerSelfToTST() {
       }
       .tab:not(.faviconized).locked .closebox::after {
         background: none;
-        // https://www.compart.com/en/unicode/U+1F512#UNC_DB
+        /* https://www.compart.com/en/unicode/U+1F512#UNC_DB */
         content: "🔒";
         line-height: 1;
         mask: none;
