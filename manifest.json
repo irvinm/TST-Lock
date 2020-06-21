@@ -7,7 +7,19 @@
   "manifest_version": 2,
   "name": "TST-Lock",
   "version": "1.0.0",
-  "permissions": ["notifications"],
+  "permissions": [
+    "activeTab",
+    "contextualIdentities",
+    "cookies",
+    "menus",
+    "menus.overrideContext",
+    "notifications",
+    "search",
+    "sessions",
+    "storage",
+    "tabs",
+    "theme"
+  ],
   "background": {
     "scripts": ["background.js"]
   },
