@@ -3,7 +3,7 @@ const kTST_ID = 'treestyletab@piro.sakura.ne.jp';
 function registerSelfToTST() {
   browser.runtime.sendMessage(kTST_ID, {
     type: 'register-self',
-    name: browser.i18n.getMessage('extensionName'),
+    name: 'TST-Lock',
     icons: browser.runtime.getManifest().icons,
     listeningTypes: ['tab-mousedown', 'tab-mouseup'],
     style: `
@@ -20,7 +20,7 @@ function registerSelfToTST() {
     `
   });
 }
-registerSelfToTST();
+registerSelfToTST(); 
 
 const lockedTabs = new Set();
 
@@ -37,10 +37,12 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
           state: 'locked'
         });
         if (locked) {
+          console.log("TST-Lock: Unlocking tab " + message.tab.id + ": Size before = " + lockedTabs.size);
           lockedTabs.delete(message.tab.id);
           browser.sessions.removeTabValue(message.tab.id, 'locked');
         }
         else {
+          console.log("TST-Lock: Locking tab " + message.tab.id + ": Size before = " + lockedTabs.size);
           lockedTabs.add(message.tab.id);
           browser.sessions.setTabValue(message.tab.id, 'locked', true);
         }
@@ -57,7 +59,10 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
       break;
 
     case 'ready':
+      console.log("TST-Lock: INIT - Calling registerSelfToTST()");
       registerSelfToTST();
+      console.log("TST-Lock: INIT - Calling loadStoredLockStates()");
+      loadStoredLockStates();
       break;
   }
 });
@@ -77,17 +82,20 @@ browser.tabs.onRemoved.addListener(async (tabId, removeInfo = {}) => {
     browser.sessions.restore(sessions[0].tab.sessionId);
 });
 
-browser.tabs.query({}).then(tabs => {
-  for (const tab of tabs) {
-    browser.sessions.getTabValue(tab.id, 'locked').then(locked => {
-      if (!locked)
-        return;
-      browser.runtime.sendMessage(kTST_ID, {
-        type:  'add-tab-state',
-        tab:   tab.id,
-        state: 'locked'
+function loadStoredLockStates() {
+  browser.tabs.query({}).then(tabs => {
+    for (const tab of tabs) {
+      browser.sessions.getTabValue(tab.id, 'locked').then(locked => {
+        if (!locked)
+          return;
+        browser.runtime.sendMessage(kTST_ID, {
+          type:  'add-tab-state',
+          tab:   tab.id,
+          state: 'locked'
+        });
+        console.log("TST-Lock: INIT - Adding tab " + tab.id + " to lockedTabs (Size before = " + lockedTabs.size + ")");
+        lockedTabs.add(tab.id);
       });
-      lockedTabs.add(tab.id);
-    });
-  }
-});
+    }
+  });
+}
