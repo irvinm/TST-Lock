@@ -22,7 +22,7 @@
     "scripts": ["background.js"]
   },
   "icons": {
-    "128": "lock.png"
+    "128": "images/lock.png"
   },
 	"applications": {
 		"gecko": {
