@@ -1,6 +1,6 @@
 {
   "browser_action": {
-    "default_icon": "lock.png"
+    "default_icon": "images/lock.png"
   },
   "description": "Lock important tabs from being accidentally closed.",
   "homepage_url": "https://github.com/irvinm/TST-Lock",
@@ -28,5 +28,8 @@
 		"gecko": {
 			"id": "TST-Lock@irvinm.addons.mozilla.org"
 		}
-	}
+  },
+  "web_accessible_resources": [
+    "images/*.png"
+  ]
 }
