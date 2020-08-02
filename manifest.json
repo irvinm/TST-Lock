@@ -24,12 +24,10 @@
   "icons": {
     "128": "images/lock.png"
   },
-	"applications": {
-		"gecko": {
-			"id": "TST-Lock@irvinm.addons.mozilla.org"
-		}
+  "applications": {
+    "gecko": {
+      "id": "TST-Lock@irvinm.addons.mozilla.org"
+    }
   },
-  "web_accessible_resources": [
-    "images/*.png"
-  ]
+  "web_accessible_resources": ["images/*.png"]
 }
