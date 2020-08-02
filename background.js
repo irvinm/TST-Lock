@@ -100,12 +100,15 @@ browser.tabs.onRemoved.addListener(async (tabId, removeInfo = {}) => {
     lockedTabs.delete(tabId);
     return;
   }
+
+  /* MCI: Commenting out original code revolving around "undo close tab"
   // wait until the tab is closed completely
   await new Promise((resolve) => setTimeout(resolve, 100));
   // and undo close tab
   const sessions = await browser.sessions.getRecentlyClosed({ maxResults: 1 });
   if (sessions.length && sessions[0].tab)
     browser.sessions.restore(sessions[0].tab.sessionId);
+  */
 });
 
 function loadStoredLockStates() {
