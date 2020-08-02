@@ -96,7 +96,7 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
 
 browser.tabs.onRemoved.addListener(async (tabId, removeInfo = {}) => {
   if (removeInfo.isWindowClosing) return;
-  if (!lockedTabs.has(tabId)) {
+  if (lockedTabs.has(tabId)) {
     lockedTabs.delete(tabId);
     return;
   }
