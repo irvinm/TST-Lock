@@ -1,24 +1,72 @@
+"use strict";
+
 const kTST_ID = "treestyletab@piro.sakura.ne.jp";
 
-function registerSelfToTST() {
-  browser.runtime.sendMessage(kTST_ID, {
-    type: "register-self",
-    name: "TST-Lock",
-    icons: browser.runtime.getManifest().icons,
-    listeningTypes: ["tab-mousedown", "tab-mouseup"],
-    style: `
-      .tab.locked .closebox {
-        pointer-events: none !important;
-      }
-      .tab:not(.faviconized).locked .closebox::after {
-        background: none;
-        content: "🔒";          
-        line-height: 1;
-        mask: none;
-      }
-    `,
-  });
+async function registerSelfToTST() {
+  try {
+    const result = await browser.runtime.sendMessage(kTST_ID, {
+      type: "register-self",
+      name: "TST-Lock",
+      icons: browser.runtime.getManifest().icons,
+      listeningTypes: ["tab-mousedown", "tab-mouseup", "wait-for-shutdown"],
+      style: `
+        .tab.locked .closebox {
+          pointer-events: none !important;
+        }
+        .tab:not(.faviconized).locked .closebox::after {
+          background: none;
+          content: "🔒";          
+          line-height: 1;
+          mask: none;
+        }
+      `,
+    });
+
+    console.log("TST-Lock: First - Calling loadStoredLockStates()");
+    loadStoredLockStates();
+  } catch (_error) {
+    console.log(
+      "TST-Lock: registerSelfToTST() -> Error: TST is not available yet"
+    );
+  }
 }
+console.log("TST-Lock: First - Calling registerSelfToTST()");
+registerSelfToTST();
+
+async function uninitFeaturesForTST() {
+  // Put codes to deactivate special features for TST here.
+  console.log("TST-Lock: Inside uninitFeaturesForTST()");
+}
+async function waitForTSTShutdown() {
+  console.log("TST-Lock: Inside waitForTSTShutdown()");
+  try {
+    // https://github.com/piroor/treestyletab/wiki/API-for-other-addons#wait-for-shutdown-type-message
+    await browser.runtime.sendMessage(TST_ID, { type: "wait-for-shutdown" });
+  } catch (error) {
+    console.log("TST-Lock: Error -> " + error);
+
+    // Extension was disabled before message was sent
+    if (
+      error.message.startsWith(
+        "Could not establish connection. Receiving end does not exist."
+      )
+    ) {
+      console.log(
+        "TST-Lock: Error -> Extension was disabled before message was sent"
+      );
+      return true;
+    }
+    // Extension was disabled while we waited
+    if (error.message.startsWith("Message manager disconnected")) {
+      console.log("TST-Lock: Error -> Extension was disabled while we waited");
+      return true;
+    }
+    // Probably an internal Tree Style Tab error
+    console.log("TST-Lock: Error -> Probably an internal Tree Style Tab error");
+    throw error;
+  }
+}
+waitForTSTShutdown().then(uninitFeaturesForTST);
 
 const lockedTabs = new Set();
 
@@ -71,6 +119,11 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
       console.log("TST-Lock: Ready - Calling loadStoredLockStates()");
       loadStoredLockStates();
       break;
+
+    // Triggers teardown process for this addon on TST side.
+    // https://github.com/piroor/treestyletab/wiki/API-for-other-addons#unregister-from-tst
+    case "wait-for-shutdown":
+      return new Promise(() => {});
   }
 });
 
