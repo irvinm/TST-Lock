@@ -19,8 +19,6 @@ function registerSelfToTST() {
     `,
   });
 }
-console.log("TST-Lock: Calling first registerSelfToTST()");
-registerSelfToTST();
 
 const lockedTabs = new Set();
 
