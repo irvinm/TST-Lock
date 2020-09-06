@@ -1,9 +1,6 @@
 const kTST_ID = "treestyletab@piro.sakura.ne.jp";
 
 function registerSelfToTST() {
-  var myURL = browser.runtime.getURL("images/lock.png");
-  console.log("Lock Url = " + myURL);
-
   browser.runtime.sendMessage(kTST_ID, {
     type: "register-self",
     name: "TST-Lock",
