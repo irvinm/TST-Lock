@@ -48,7 +48,7 @@ async function waitForTSTShutdown() {
   console.log("TST-Lock: Establishing waitForTSTShutdown()");
   try {
     // https://github.com/piroor/treestyletab/wiki/API-for-other-addons#wait-for-shutdown-type-message
-    await browser.runtime.sendMessage(TST_ID, { type: "wait-for-shutdown" });
+    await browser.runtime.sendMessage(kTST_ID, { type: "wait-for-shutdown" });
   } catch (error) {
     console.log("TST-Lock: Error -> " + error);
 
