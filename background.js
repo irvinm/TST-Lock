@@ -37,8 +37,15 @@ async function uninitFeaturesForTST() {
   // Put codes to deactivate special features for TST here.
   console.log("TST-Lock: Inside uninitFeaturesForTST()");
 }
+
+/*
+   If you send a message with the type wait-for-shutdown, TST simply returns a promised value 
+   it will be resolved after TST is disabled. However, please note that the promise is never 
+   been resolved. The promise will be rejected when TST becomes disabled or uninstalled. 
+   So you can do uninitialize your addon when the promise is rejected. 
+*/
 async function waitForTSTShutdown() {
-  console.log("TST-Lock: Inside waitForTSTShutdown()");
+  console.log("TST-Lock: Establishing waitForTSTShutdown()");
   try {
     // https://github.com/piroor/treestyletab/wiki/API-for-other-addons#wait-for-shutdown-type-message
     await browser.runtime.sendMessage(TST_ID, { type: "wait-for-shutdown" });
@@ -155,7 +162,7 @@ function loadStoredLockStates() {
           state: "locked",
         });
         console.log(
-          "TST-Lock: INIT - Adding tab " +
+          "TST-Lock: loadStoredLockStates - Adding tab " +
             tab.id +
             " to lockedTabs (Size before = " +
             lockedTabs.size +
