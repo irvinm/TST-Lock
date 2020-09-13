@@ -1,9 +1,11 @@
 "use strict";
 
 const kTST_ID = "treestyletab@piro.sakura.ne.jp";
+const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
 
 async function registerSelfToTST() {
   try {
+    console.log("TST-Lock: Sending register-self message to TST");
     const result = await browser.runtime.sendMessage(kTST_ID, {
       type: "register-self",
       name: "TST-Lock",
@@ -26,8 +28,13 @@ async function registerSelfToTST() {
     loadStoredLockStates();
   } catch (_error) {
     console.log(
-      "TST-Lock: registerSelfToTST() -> Error: TST is not available yet"
+      "TST-Lock: registerSelfToTST() -> Error: TST is not available yet (" +
+        _error +
+        ")"
     );
+    console.log("TST-Lock: Retrying registerSelfToTST() in 250 ms");
+    await sleep(250);
+    registerSelfToTST();
   }
 }
 console.log("TST-Lock: First - Calling registerSelfToTST()");
@@ -50,7 +57,7 @@ async function waitForTSTShutdown() {
     // https://github.com/piroor/treestyletab/wiki/API-for-other-addons#wait-for-shutdown-type-message
     await browser.runtime.sendMessage(kTST_ID, { type: "wait-for-shutdown" });
   } catch (error) {
-    console.log("TST-Lock: Error -> " + error);
+    console.log("TST-Lock: " + error);
 
     // Extension was disabled before message was sent
     if (
@@ -59,13 +66,13 @@ async function waitForTSTShutdown() {
       )
     ) {
       console.log(
-        "TST-Lock: Error -> Extension was disabled before message was sent"
+        "TST-Lock: Error -> TST was disabled before message was sent"
       );
       return true;
     }
     // Extension was disabled while we waited
     if (error.message.startsWith("Message manager disconnected")) {
-      console.log("TST-Lock: Error -> Extension was disabled while we waited");
+      console.log("TST-Lock: Error -> TST was disabled while we waited");
       return true;
     }
     // Probably an internal Tree Style Tab error
@@ -121,10 +128,6 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
       break;
 
     case "ready":
-      console.log("TST-Lock: Ready - Calling registerSelfToTST()");
-      registerSelfToTST();
-      console.log("TST-Lock: Ready - Calling loadStoredLockStates()");
-      loadStoredLockStates();
       break;
 
     // Triggers teardown process for this addon on TST side.
@@ -140,15 +143,6 @@ browser.tabs.onRemoved.addListener(async (tabId, removeInfo = {}) => {
     lockedTabs.delete(tabId);
     return;
   }
-
-  /* MCI: Commenting out original code revolving around "undo close tab"
-  // wait until the tab is closed completely
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  // and undo close tab
-  const sessions = await browser.sessions.getRecentlyClosed({ maxResults: 1 });
-  if (sessions.length && sessions[0].tab)
-    browser.sessions.restore(sessions[0].tab.sessionId);
-  */
 });
 
 function loadStoredLockStates() {
