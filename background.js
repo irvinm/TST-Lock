@@ -24,8 +24,6 @@ async function registerSelfToTST() {
       `,
     });
 
-    console.log("TST-Lock: First - Calling loadStoredLockStates()");
-    loadStoredLockStates();
   } catch (_error) {
     console.log(
       "TST-Lock: registerSelfToTST() -> Error: TST is not available yet (" +
@@ -128,6 +126,10 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
       break;
 
     case "ready":
+      // If getting a "ready" message (maybe after TST upgrade) make to sure to reload locks
+      console.log("TST-Lock: Inside ready event - reregister and load locks");
+      registerSelfToTST();
+      loadStoredLockStates();
       break;
 
     // Triggers teardown process for this addon on TST side.
