@@ -135,6 +135,7 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
     // Triggers teardown process for this addon on TST side.
     // https://github.com/piroor/treestyletab/wiki/API-for-other-addons#unregister-from-tst
     case "wait-for-shutdown":
+      loadStoredLockStates();
       return new Promise(() => {});
   }
 });
@@ -148,6 +149,7 @@ browser.tabs.onRemoved.addListener(async (tabId, removeInfo = {}) => {
 });
 
 function loadStoredLockStates() {
+  console.log("TST-Lock: Inside loadStoredLockStates");
   browser.tabs.query({}).then((tabs) => {
     for (const tab of tabs) {
       browser.sessions.getTabValue(tab.id, "locked").then((locked) => {
