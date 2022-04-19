@@ -2,7 +2,7 @@
 
 # TST Lock
 
-This is the project that is based on removing the ability to accidentally close a tab via the "X" for tabs that you consider important and don't want to lose. Holding "Ctrl + Shift" while clicking on a tab will replace the "X" with a lock graphic. You can still close the tab (even with the lock displayed) by right-clicking and selecting "Close Tab".
+This project extends "Tree Style Tab" to help users from accidentally closing a tab via the "X" for tabs that you consider important.  Holding "Ctrl + Shift" while clicking on a tab will toggle the "X" with a lock graphic which is non-interactive. (Simply repeat the process to toggle the lock graphic back to the normal "X")  You can still close the tab (even with the lock displayed) by right-clicking on the tab and selecting "Close Tab".
 
 Original discussion: https://github.com/piroor/treestyletab/issues/2104
 
@@ -10,7 +10,7 @@ Original discussion: https://github.com/piroor/treestyletab/issues/2104
 
 You can change how the lock graphic is sized and positioned by using TST CSS.
 
-In my screenshot example, I used:
+In my screenshot example on AMO, I used the following CSS to customize to my liking:
 
 ```
 #tabbar tab-item.locked tab-closebox {
@@ -21,3 +21,5 @@ In my screenshot example, I used:
   opacity: 1 !important;
 }
 ```
+
+![2022-04-18_19-35-23](https://user-images.githubusercontent.com/979729/163903182-23db7fe1-c8b0-42f1-a151-58212fb9897e.png)
