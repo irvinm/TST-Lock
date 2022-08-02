@@ -81,6 +81,8 @@ async function waitForTSTShutdown() {
 waitForTSTShutdown().then(uninitFeaturesForTST);
 
 const lockedTabs = new Set();
+browser.browserAction.setBadgeBackgroundColor({'color': 'green'});
+browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
 
 browser.runtime.onMessageExternal.addListener((message, sender) => {
   const locked = message.tab && lockedTabs.has(message.tab.id);
@@ -102,6 +104,7 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
               lockedTabs.size
           );
           lockedTabs.delete(message.tab.id);
+          browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
           browser.sessions.removeTabValue(message.tab.id, "locked");
         } else {
           console.log(
@@ -111,6 +114,7 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
               lockedTabs.size
           );
           lockedTabs.add(message.tab.id);
+          browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
           browser.sessions.setTabValue(message.tab.id, "locked", true);
         }
         // Please remind that this cancels TST's default behavior for the action.
@@ -167,6 +171,7 @@ function loadStoredLockStates() {
             ")"
         );
         lockedTabs.add(tab.id);
+        browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
       });
     }
   });
