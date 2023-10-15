@@ -1,4 +1,10 @@
-![CI/CD](https://github.com/irvinm/TST-Lock/workflows/CI/CD/badge.svg)
+![CI/CD](https://github.com/irvinm/TST-Lock/workflows/CI/CD/badge.svg) ![Mozilla Add-on](https://img.shields.io/amo/users/TST-Lock.svg?style=flat-square) ![](https://img.shields.io/amo/v/TST-Lock.svg?style=flat-square)
+
+<!-- Can also get # of downloads per week:  https://img.shields.io/amo/dw/TST-Lock.svg?style=flat-square -->
+<!-- Github badges:  https://shields.io/search?q=github -->
+<!-- Mozilla badges:  https://shields.io/search?q=mozilla -->
+<!-- https://shields.io/badges -->
+<!-- https://github.com/badges/shields -->
 
 # TST Lock
 
