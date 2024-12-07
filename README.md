@@ -10,7 +10,9 @@
 
 This project extends "Tree Style Tab" to help users from accidentally closing a tab via the "X" for tabs that you consider important.  Holding "Ctrl + Shift" while clicking on a tab will toggle the "X" with a lock graphic which is non-interactive. (Simply repeat the process to toggle the lock graphic back to the normal "X")  You can still close the tab (even with the lock displayed) by right-clicking on the tab and selecting "Close Tab".
 
-Original discussion: https://github.com/piroor/treestyletab/issues/2104
+Original TST discussion: https://github.com/piroor/treestyletab/issues/2104
+
+Currently defect/enhancement requests:  https://github.com/irvinm/TST-Lock/issues
 
 ------
 
