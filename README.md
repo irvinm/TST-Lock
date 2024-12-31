@@ -12,7 +12,7 @@ This project extends "Tree Style Tab" to help users from accidentally closing a 
 
 Original TST discussion: https://github.com/piroor/treestyletab/issues/2104
 
-Currently defect/enhancement requests:  https://github.com/irvinm/TST-Lock/issues
+Current defect/enhancement requests:  https://github.com/irvinm/TST-Lock/issues
 
 ------
 
