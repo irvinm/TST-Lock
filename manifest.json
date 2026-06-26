@@ -17,9 +17,14 @@
   "icons": {
     "128": "images/lock.png"
   },
-  "applications": {
+  "browser_specific_settings": {
     "gecko": {
-      "id": "TST-Lock@irvinm.addons.mozilla.org"
+      "id": "TST-Lock@irvinm.addons.mozilla.org",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
     }
   },
   "web_accessible_resources": ["images/*.png"]
