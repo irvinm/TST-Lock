@@ -3,6 +3,8 @@
 const kTST_ID = "treestyletab@piro.sakura.ne.jp";
 const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
 
+let shutdownWatchPromise = null;
+
 async function registerSelfToTST() {
   try {
     console.log("TST-Lock: Sending register-self message to TST");
@@ -10,7 +12,7 @@ async function registerSelfToTST() {
       type: "register-self",
       name: "TST-Lock",
       icons: browser.runtime.getManifest().icons,
-      listeningTypes: ["tab-mousedown", "tab-mouseup", "wait-for-shutdown"],
+      listeningTypes: ["tab-mousedown", "tab-mouseup", "ready", "wait-for-shutdown"],
       style: `
         .tab.locked .closebox {
           pointer-events: none !important;
@@ -23,6 +25,14 @@ async function registerSelfToTST() {
         }
       `,
     });
+    
+    console.log("TST-Lock: Successfully registered with TST");
+    
+    // Load stored locks immediately upon successful registration
+    loadStoredLockStates();
+    
+    // Establish shutdown monitoring
+    monitorTSTShutdown();
 
   } catch (_error) {
     console.log(
@@ -41,46 +51,32 @@ registerSelfToTST();
 async function uninitFeaturesForTST() {
   // Put codes to deactivate special features for TST here.
   console.log("TST-Lock: Inside uninitFeaturesForTST()");
+  locksLoaded = false;
 }
 
-/*
-   If you send a message with the type wait-for-shutdown, TST simply returns a promised value 
-   it will be resolved after TST is disabled. However, please note that the promise is never 
-   been resolved. The promise will be rejected when TST becomes disabled or uninstalled. 
-   So you can do uninitialize your addon when the promise is rejected. 
-*/
-async function waitForTSTShutdown() {
-  console.log("TST-Lock: Establishing waitForTSTShutdown()");
-  try {
-    // https://github.com/piroor/treestyletab/wiki/API-for-other-addons#wait-for-shutdown-type-message
-    await browser.runtime.sendMessage(kTST_ID, { type: "wait-for-shutdown" });
-  } catch (error) {
-    console.log("TST-Lock: " + error);
-
-    // Extension was disabled before message was sent
-    if (
-      error.message.startsWith(
-        "Could not establish connection. Receiving end does not exist."
-      )
-    ) {
-      console.log(
-        "TST-Lock: Error -> TST was disabled before message was sent"
-      );
-      return true;
-    }
-    // Extension was disabled while we waited
-    if (error.message.startsWith("Message manager disconnected")) {
-      console.log("TST-Lock: Error -> TST was disabled while we waited");
-      return true;
-    }
-    // Probably an internal Tree Style Tab error
-    console.log("TST-Lock: Error -> Probably an internal Tree Style Tab error");
-    throw error;
+function monitorTSTShutdown() {
+  if (shutdownWatchPromise) {
+    return;
   }
+  console.log("TST-Lock: Establishing monitorTSTShutdown()");
+  shutdownWatchPromise = browser.runtime.sendMessage(kTST_ID, { type: "wait-for-shutdown" })
+    .then((result) => {
+      console.log("TST-Lock: wait-for-shutdown resolved with:", result);
+      // Under normal circumstances when TST is running, the promise does not resolve.
+      // If it resolved (e.g. during TST startup when not ready to hold the promise),
+      // we do not call uninitFeaturesForTST because TST is still active.
+    })
+    .catch((error) => {
+      console.log("TST-Lock: wait-for-shutdown promise rejected/disconnected: " + error);
+      uninitFeaturesForTST();
+    })
+    .finally(() => {
+      shutdownWatchPromise = null;
+    });
 }
-waitForTSTShutdown().then(uninitFeaturesForTST);
 
 const lockedTabs = new Set();
+let locksLoaded = false;
 browser.browserAction.setBadgeBackgroundColor({'color': 'green'});
 browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
 
@@ -132,15 +128,16 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
     case "ready":
       // If getting a "ready" message (maybe after TST upgrade) make to sure to reload locks
       console.log("TST-Lock: Inside ready event - reregister and load locks");
+      locksLoaded = false; // Reset flag to allow reloading
       registerSelfToTST();
-      loadStoredLockStates();
       break;
 
     // Triggers teardown process for this addon on TST side.
     // https://github.com/piroor/treestyletab/wiki/API-for-other-addons#unregister-from-tst
     case "wait-for-shutdown":
-      loadStoredLockStates();
-      return new Promise(() => {});
+      return new Promise((resolve) => {
+        window.addEventListener("beforeunload", () => resolve(true));
+      });
   }
 });
 
@@ -153,7 +150,15 @@ browser.tabs.onRemoved.addListener(async (tabId, removeInfo = {}) => {
 });
 
 function loadStoredLockStates() {
+  if (locksLoaded) {
+    console.log("TST-Lock: loadStoredLockStates - Locks already loaded, skipping");
+    return;
+  }
+  
   console.log("TST-Lock: Inside loadStoredLockStates");
+  locksLoaded = true;
+  lockedTabs.clear();
+  
   browser.tabs.query({}).then((tabs) => {
     for (const tab of tabs) {
       browser.sessions.getTabValue(tab.id, "locked").then((locked) => {
