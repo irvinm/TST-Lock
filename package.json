@@ -1,0 +1,37 @@
+{
+  "name": "tst-lock",
+  "version": "1.1.7",
+  "description": "Lock important tabs from being accidentally closed.",
+  "main": "background.js",
+  "scripts": {
+    "build": "web-ext build",
+    "lint": "web-ext lint",
+    "start": "web-ext run",
+    "test": "jest"
+  },
+  "webExt": {
+    "ignoreFiles": [
+      "package.json",
+      "package-lock.json",
+      "tests",
+      "MakeXPI.bat",
+      "makefile",
+      ".github",
+      ".vscode",
+      ".gemini",
+      ".agents",
+      ".specify",
+      "GEMINI.md",
+      "README.md",
+      "LICENSE"
+    ],
+    "build": {
+      "overwriteDest": true,
+      "filename": "TST-Lock.xpi"
+    }
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "web-ext": "^10.4.0"
+  }
+}
