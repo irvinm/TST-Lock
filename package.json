@@ -33,5 +33,9 @@
   "devDependencies": {
     "jest": "^30.4.2",
     "web-ext": "^10.4.0"
+  },
+  "overrides": {
+    "adm-zip": "^0.6.0",
+    "js-yaml": "^3.15.0"
   }
 }
