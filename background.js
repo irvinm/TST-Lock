@@ -63,8 +63,6 @@ function monitorTSTShutdown() {
     .then((result) => {
       console.log("TST-Lock: wait-for-shutdown resolved with:", result);
       // Under normal circumstances when TST is running, the promise does not resolve.
-      // If it resolved (e.g. during TST startup when not ready to hold the promise),
-      // we do not call uninitFeaturesForTST because TST is still active.
     })
     .catch((error) => {
       console.log("TST-Lock: wait-for-shutdown promise rejected/disconnected: " + error);
@@ -91,49 +89,36 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
           type: locked ? "remove-tab-state" : "add-tab-state",
           tab: message.tab.id,
           state: "locked",
-        });
+        }).catch(() => {}); // Suppress errors if TST messaging fails
+
         if (locked) {
-          console.log(
-            "TST-Lock: Unlocking tab " +
-              message.tab.id +
-              ": Size before = " +
-              lockedTabs.size
-          );
+          console.log(`TST-Lock: Unlocking tab ${message.tab.id}: Size before = ${lockedTabs.size}`);
           lockedTabs.delete(message.tab.id);
           browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
-          browser.sessions.removeTabValue(message.tab.id, "locked");
+          browser.sessions.removeTabValue(message.tab.id, "locked").catch(() => {});
         } else {
-          console.log(
-            "TST-Lock: Locking tab " +
-              message.tab.id +
-              ": Size before = " +
-              lockedTabs.size
-          );
+          console.log(`TST-Lock: Locking tab ${message.tab.id}: Size before = ${lockedTabs.size}`);
           lockedTabs.add(message.tab.id);
           browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
-          browser.sessions.setTabValue(message.tab.id, "locked", true);
+          browser.sessions.setTabValue(message.tab.id, "locked", true).catch(() => {});
         }
-        // Please remind that this cancels TST's default behavior for the action.
         return Promise.resolve(true);
       }
       break;
 
     case "tab-mouseup":
       if (locked && message.button == 1) {
-        // Prevent to close the tab by middle click
+        // Prevent closing the tab via middle click
         return Promise.resolve(true);
       }
       break;
 
     case "ready":
-      // If getting a "ready" message (maybe after TST upgrade) make to sure to reload locks
       console.log("TST-Lock: Inside ready event - reregister and load locks");
-      locksLoaded = false; // Reset flag to allow reloading
+      locksLoaded = false; 
       registerSelfToTST();
       break;
 
-    // Triggers teardown process for this addon on TST side.
-    // https://github.com/piroor/treestyletab/wiki/API-for-other-addons#unregister-from-tst
     case "wait-for-shutdown":
       return new Promise((resolve) => {
         window.addEventListener("beforeunload", () => resolve(true));
@@ -141,15 +126,17 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
   }
 });
 
+// Clean up memory when a tab is closed
 browser.tabs.onRemoved.addListener(async (tabId, removeInfo = {}) => {
   if (removeInfo.isWindowClosing) return;
   if (lockedTabs.has(tabId)) {
     lockedTabs.delete(tabId);
-    return;
+    // Update badge when a locked tab is closed
+    browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
   }
 });
 
-function loadStoredLockStates() {
+async function loadStoredLockStates() {
   if (locksLoaded) {
     console.log("TST-Lock: loadStoredLockStates - Locks already loaded, skipping");
     return;
@@ -159,25 +146,36 @@ function loadStoredLockStates() {
   locksLoaded = true;
   lockedTabs.clear();
   
-  browser.tabs.query({}).then((tabs) => {
-    for (const tab of tabs) {
-      browser.sessions.getTabValue(tab.id, "locked").then((locked) => {
-        if (!locked) return;
-        browser.runtime.sendMessage(kTST_ID, {
-          type: "add-tab-state",
-          tab: tab.id,
-          state: "locked",
-        });
-        console.log(
-          "TST-Lock: loadStoredLockStates - Adding tab " +
-            tab.id +
-            " to lockedTabs (Size before = " +
-            lockedTabs.size +
-            ")"
-        );
-        lockedTabs.add(tab.id);
-        browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
-      });
-    }
-  });
+  try {
+    const tabs = await browser.tabs.query({});
+    
+    // Map tabs to an array of promises for concurrent execution
+    const checkPromises = tabs.map(async (tab) => {
+      try {
+        const locked = await browser.sessions.getTabValue(tab.id, "locked");
+        if (locked) {
+          // Tell TST the tab is locked (don't await this, let it happen in background)
+          browser.runtime.sendMessage(kTST_ID, {
+            type: "add-tab-state",
+            tab: tab.id,
+            state: "locked",
+          }).catch(() => {});
+          
+          lockedTabs.add(tab.id);
+        }
+      } catch (e) {
+        // Silently ignore restricted tabs (e.g. about: config pages)
+      }
+    });
+
+    // Wait for all session checks to complete
+    await Promise.all(checkPromises);
+    
+    // Performance improvement: Update the UI badge exactly ONCE
+    browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
+    console.log(`TST-Lock: Finished loading locks. Total locked: ${lockedTabs.size}`);
+    
+  } catch (error) {
+    console.log("TST-Lock: Error querying tabs: " + error);
+  }
 }
