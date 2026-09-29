@@ -130,6 +130,7 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
 browser.tabs.onRemoved.addListener(async (tabId, removeInfo = {}) => {
   if (removeInfo.isWindowClosing) return;
   if (lockedTabs.has(tabId)) {
+    console.log(`TST-Lock: Closed locked tab ${tabId}: Size before = ${lockedTabs.size}`);
     lockedTabs.delete(tabId);
     // Update badge when a locked tab is closed
     browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
