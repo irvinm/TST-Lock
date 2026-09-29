@@ -134,7 +134,7 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
       break;
 
     case "ready":
-      console.log("TST-Lock: Inside ready event - reregister and load locks");
+      console.log("TST-Lock: Received 'ready' event from TST");
       locksLoaded = false; 
       registerSelfToTST();
       break;
