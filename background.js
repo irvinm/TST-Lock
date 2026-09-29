@@ -90,18 +90,24 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
           type: locked ? "remove-tab-state" : "add-tab-state",
           tab: message.tab.id,
           state: "locked",
-        }).catch(() => {}); // Suppress errors if TST messaging fails
+        }).catch((err) => {
+          console.warn(`TST-Lock: Failed to update tab state in TST for tab ${message.tab.id}:`, err);
+        });
 
         if (locked) {
           console.log(`TST-Lock: Unlocking tab ${message.tab.id}: Size before = ${lockedTabs.size}`);
           lockedTabs.delete(message.tab.id);
           browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
-          browser.sessions.removeTabValue(message.tab.id, "locked").catch(() => {});
+          browser.sessions.removeTabValue(message.tab.id, "locked").catch((err) => {
+            console.warn(`TST-Lock: Failed to remove lock session state for tab ${message.tab.id}:`, err);
+          });
         } else {
           console.log(`TST-Lock: Locking tab ${message.tab.id}: Size before = ${lockedTabs.size}`);
           lockedTabs.add(message.tab.id);
           browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
-          browser.sessions.setTabValue(message.tab.id, "locked", true).catch(() => {});
+          browser.sessions.setTabValue(message.tab.id, "locked", true).catch((err) => {
+            console.warn(`TST-Lock: Failed to persist lock session state for tab ${message.tab.id}:`, err);
+          });
         }
         return Promise.resolve(true);
       }
