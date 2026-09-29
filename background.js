@@ -97,6 +97,11 @@ browser.browserAction.setBadgeBackgroundColor({'color': 'green'});
 browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
 
 browser.runtime.onMessageExternal.addListener((message, sender) => {
+  if (sender && sender.id && sender.id !== kTST_ID) {
+    console.warn(`TST-Lock: Ignored external message from unauthorized sender: ${sender.id}`);
+    return;
+  }
+
   const locked = message.tab && lockedTabs.has(message.tab.id);
 
   switch (message.type) {

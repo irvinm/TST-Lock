@@ -183,6 +183,20 @@ describe("TST-Lock Background Script", () => {
     expect(mockSendMessage).not.toHaveBeenCalled();
   });
 
+  it("should ignore external messages from unauthorized sender", async () => {
+    require("../background.js");
+    await Promise.resolve();
+
+    mockSendMessage.mockClear();
+    const result = await externalMessageCallback(
+      { type: "tab-mousedown", button: 0, ctrlKey: true, shiftKey: true, tab: { id: 123 } },
+      { id: "unauthorized-addon@example.com" }
+    );
+
+    expect(result).toBeUndefined();
+    expect(mockSendMessage).not.toHaveBeenCalled();
+  });
+
   it("should prevent closing tab with middle click if locked", async () => {
     require("../background.js");
     await Promise.resolve();
