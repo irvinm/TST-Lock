@@ -83,7 +83,6 @@ browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
 browser.runtime.onMessageExternal.addListener((message, sender) => {
   const locked = message.tab && lockedTabs.has(message.tab.id);
 
-  console.log("TST-Lock: Received event -> " + message.type);
   switch (message.type) {
     case "tab-mousedown":
       if (message.button == 0 && message.ctrlKey && message.shiftKey) {
