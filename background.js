@@ -29,7 +29,9 @@ async function registerSelfToTST() {
     console.log("TST-Lock: Successfully registered with TST");
     
     // Load stored locks immediately upon successful registration
-    loadStoredLockStates();
+    loadStoredLockStates().catch((error) => {
+      console.log("TST-Lock: Error loading stored lock states: " + error);
+    });
     
     // Establish shutdown monitoring
     monitorTSTShutdown();
