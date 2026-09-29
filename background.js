@@ -86,6 +86,11 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
   switch (message.type) {
     case "tab-mousedown":
       if (message.button == 0 && message.ctrlKey && message.shiftKey) {
+        if (!message.tab || typeof message.tab.id === "undefined") {
+          console.warn("TST-Lock: Received tab-mousedown without a valid tab target:", message);
+          return;
+        }
+
         browser.runtime.sendMessage(kTST_ID, {
           type: locked ? "remove-tab-state" : "add-tab-state",
           tab: message.tab.id,

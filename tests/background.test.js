@@ -146,6 +146,22 @@ describe("TST-Lock Background Script", () => {
     expect(mockSetBadgeText).toHaveBeenLastCalledWith({ text: "0" });
   });
 
+  it("should safely ignore tab-mousedown without a valid tab target", async () => {
+    require("../background.js");
+    await Promise.resolve();
+
+    mockSendMessage.mockClear();
+    const result = await externalMessageCallback({
+      type: "tab-mousedown",
+      button: 0,
+      ctrlKey: true,
+      shiftKey: true
+    });
+
+    expect(result).toBeUndefined();
+    expect(mockSendMessage).not.toHaveBeenCalled();
+  });
+
   it("should prevent closing tab with middle click if locked", async () => {
     require("../background.js");
     await Promise.resolve();
