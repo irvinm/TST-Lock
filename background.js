@@ -141,7 +141,7 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
 
     case "tab-mouseup":
       if (locked && message.button == 1) {
-        // Prevent closing the tab via middle click
+        console.log(`TST-Lock: Blocked middle-click close attempt on locked tab ${message.tab.id}`);
         return Promise.resolve(true);
       }
       break;
