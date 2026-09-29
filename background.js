@@ -5,9 +5,15 @@ const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
 
 let shutdownWatchPromise = null;
 
+const REGISTRATION_RETRY_DELAY = 500;
+const MAX_REGISTRATION_ATTEMPTS = 240; // 120 seconds of active polling
+let registrationRetryCount = 0;
+
 async function registerSelfToTST() {
   try {
-    console.log("TST-Lock: Sending register-self message to TST");
+    if (registrationRetryCount === 0) {
+      console.log("TST-Lock: Sending register-self message to TST");
+    }
     const result = await browser.runtime.sendMessage(kTST_ID, {
       type: "register-self",
       name: "TST-Lock",
@@ -26,7 +32,12 @@ async function registerSelfToTST() {
       `,
     });
     
-    console.log("TST-Lock: Successfully registered with TST");
+    if (registrationRetryCount > 0) {
+      console.log(`TST-Lock: Successfully registered with TST after ${registrationRetryCount + 1} attempts`);
+    } else {
+      console.log("TST-Lock: Successfully registered with TST");
+    }
+    registrationRetryCount = 0;
     
     // Load stored locks immediately upon successful registration
     loadStoredLockStates().catch((error) => {
@@ -37,13 +48,18 @@ async function registerSelfToTST() {
     monitorTSTShutdown();
 
   } catch (_error) {
-    console.log(
-      "TST-Lock: registerSelfToTST() -> Error: TST is not available yet (" +
-        _error +
-        ")"
-    );
-    console.log("TST-Lock: Retrying registerSelfToTST() in 250 ms");
-    await sleep(250);
+    if (registrationRetryCount === 0) {
+      console.log(`TST-Lock: TST is not available yet (${_error}). Retrying every ${REGISTRATION_RETRY_DELAY}ms...`);
+    }
+    registrationRetryCount++;
+
+    if (registrationRetryCount >= MAX_REGISTRATION_ATTEMPTS) {
+      console.warn(`TST-Lock: TST did not respond after ${MAX_REGISTRATION_ATTEMPTS} attempts (${(MAX_REGISTRATION_ATTEMPTS * REGISTRATION_RETRY_DELAY) / 1000}s). Stopping active polling; waiting for TST 'ready' event.`);
+      registrationRetryCount = 0;
+      return;
+    }
+
+    await sleep(REGISTRATION_RETRY_DELAY);
     registerSelfToTST();
   }
 }

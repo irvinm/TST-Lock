@@ -85,7 +85,7 @@ describe("TST-Lock Background Script", () => {
     expect(mockSetBadgeText).toHaveBeenCalledWith({ text: "0" });
   });
 
-  it("should retry registration after 250ms if it fails", async () => {
+  it("should retry registration after 500ms if it fails", async () => {
     // Fail the first time, succeed the second time
     mockSendMessage
       .mockRejectedValueOnce(new Error("TST not ready"))
@@ -98,10 +98,31 @@ describe("TST-Lock Background Script", () => {
     expect(mockSendMessage).toHaveBeenCalledTimes(1);
 
     // Fast-forward time
-    jest.advanceTimersByTime(250);
+    jest.advanceTimersByTime(500);
     await Promise.resolve(); // Flush microtasks
 
     expect(mockSendMessage).toHaveBeenCalledTimes(2);
+  });
+
+  it("should stop retrying registration after reaching MAX_REGISTRATION_ATTEMPTS", async () => {
+    mockSendMessage.mockRejectedValue(new Error("TST never available"));
+
+    require("../background.js");
+    await Promise.resolve();
+
+    for (let i = 0; i < 240; i++) {
+      jest.advanceTimersByTime(500);
+      await Promise.resolve();
+      await Promise.resolve();
+    }
+
+    expect(mockSendMessage).toHaveBeenCalledTimes(240);
+
+    // Advance further and ensure no more attempts are made
+    jest.advanceTimersByTime(5000);
+    await Promise.resolve();
+
+    expect(mockSendMessage).toHaveBeenCalledTimes(240);
   });
 
   it("should toggle lock status on Ctrl+Shift+mousedown", async () => {
