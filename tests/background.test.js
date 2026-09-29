@@ -85,44 +85,57 @@ describe("TST-Lock Background Script", () => {
     expect(mockSetBadgeText).toHaveBeenCalledWith({ text: "0" });
   });
 
-  it("should retry registration after 500ms if it fails", async () => {
-    // Fail the first time, succeed the second time
-    mockSendMessage
-      .mockRejectedValueOnce(new Error("TST not ready"))
-      .mockResolvedValueOnce({ success: true });
+  it("should handle registration failure gracefully without polling", async () => {
+    mockSendMessage.mockRejectedValue(new Error("TST not ready"));
 
     require("../background.js");
+    await Promise.resolve();
 
-    // Wait for the first attempt to fail and schedule retry
-    await Promise.resolve(); // Flush microtasks
     expect(mockSendMessage).toHaveBeenCalledTimes(1);
 
-    // Fast-forward time
-    jest.advanceTimersByTime(500);
-    await Promise.resolve(); // Flush microtasks
+    // Fast-forward any timers to verify no polling timers were scheduled
+    jest.advanceTimersByTime(10000);
+    await Promise.resolve();
 
-    expect(mockSendMessage).toHaveBeenCalledTimes(2);
+    expect(mockSendMessage).toHaveBeenCalledTimes(1);
   });
 
-  it("should stop retrying registration after reaching MAX_REGISTRATION_ATTEMPTS", async () => {
-    mockSendMessage.mockRejectedValue(new Error("TST never available"));
+  it("should defer lock loading and shutdown monitoring when TST returns falsy on startup", async () => {
+    mockSendMessage.mockResolvedValueOnce(undefined);
 
     require("../background.js");
     await Promise.resolve();
 
-    for (let i = 0; i < 240; i++) {
-      jest.advanceTimersByTime(500);
-      await Promise.resolve();
-      await Promise.resolve();
-    }
+    expect(mockSendMessage).toHaveBeenCalledWith(
+      "treestyletab@piro.sakura.ne.jp",
+      expect.objectContaining({ type: "register-self" })
+    );
 
-    expect(mockSendMessage).toHaveBeenCalledTimes(240);
+    expect(mockTabsQuery).not.toHaveBeenCalled();
+    expect(mockSendMessage).not.toHaveBeenCalledWith(
+      "treestyletab@piro.sakura.ne.jp",
+      expect.objectContaining({ type: "wait-for-shutdown" })
+    );
+  });
 
-    // Advance further and ensure no more attempts are made
-    jest.advanceTimersByTime(5000);
+  it("should re-register when receiving 'ready' message from TST", async () => {
+    require("../background.js");
     await Promise.resolve();
 
-    expect(mockSendMessage).toHaveBeenCalledTimes(240);
+    expect(mockSendMessage).toHaveBeenCalledWith(
+      "treestyletab@piro.sakura.ne.jp",
+      expect.objectContaining({ type: "register-self" })
+    );
+
+    mockSendMessage.mockClear();
+
+    // Trigger TST 'ready' event
+    await externalMessageCallback({ type: "ready" }, { id: "treestyletab@piro.sakura.ne.jp" });
+
+    expect(mockSendMessage).toHaveBeenCalledWith(
+      "treestyletab@piro.sakura.ne.jp",
+      expect.objectContaining({ type: "register-self" })
+    );
   });
 
   it("should toggle lock status on Ctrl+Shift+mousedown", async () => {

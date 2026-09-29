@@ -1,19 +1,17 @@
 "use strict";
 
 const kTST_ID = "treestyletab@piro.sakura.ne.jp";
-const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
-
 let shutdownWatchPromise = null;
 
-const REGISTRATION_RETRY_DELAY = 500;
-const MAX_REGISTRATION_ATTEMPTS = 240; // 120 seconds of active polling
-let registrationRetryCount = 0;
+let isRegistering = false;
 
 async function registerSelfToTST() {
+  if (isRegistering) {
+    return;
+  }
+  isRegistering = true;
   try {
-    if (registrationRetryCount === 0) {
-      console.log("TST-Lock: Sending register-self message to TST");
-    }
+    console.log("TST-Lock: Sending register-self message to TST");
     const result = await browser.runtime.sendMessage(kTST_ID, {
       type: "register-self",
       name: "TST-Lock",
@@ -31,39 +29,28 @@ async function registerSelfToTST() {
         }
       `,
     });
-    
-    if (registrationRetryCount > 0) {
-      console.log(`TST-Lock: Successfully registered with TST after ${registrationRetryCount + 1} attempts`);
-    } else {
-      console.log("TST-Lock: Successfully registered with TST");
+
+    if (!result) {
+      console.log("TST-Lock: TST is starting up (not initialized yet). Waiting for 'ready' event.");
+      return;
     }
-    registrationRetryCount = 0;
-    
+
+    console.log("TST-Lock: Successfully registered with TST");
+
     // Load stored locks immediately upon successful registration
     loadStoredLockStates().catch((error) => {
       console.log("TST-Lock: Error loading stored lock states: " + error);
     });
-    
+
     // Establish shutdown monitoring
     monitorTSTShutdown();
 
   } catch (_error) {
-    if (registrationRetryCount === 0) {
-      console.log(`TST-Lock: TST is not available yet (${_error}). Retrying every ${REGISTRATION_RETRY_DELAY}ms...`);
-    }
-    registrationRetryCount++;
-
-    if (registrationRetryCount >= MAX_REGISTRATION_ATTEMPTS) {
-      console.warn(`TST-Lock: TST did not respond after ${MAX_REGISTRATION_ATTEMPTS} attempts (${(MAX_REGISTRATION_ATTEMPTS * REGISTRATION_RETRY_DELAY) / 1000}s). Stopping active polling; waiting for TST 'ready' event.`);
-      registrationRetryCount = 0;
-      return;
-    }
-
-    await sleep(REGISTRATION_RETRY_DELAY);
-    registerSelfToTST();
+    console.log("TST-Lock: TST is not available yet. Waiting for TST 'ready' event.");
+  } finally {
+    isRegistering = false;
   }
 }
-console.log("TST-Lock: First - Calling registerSelfToTST()");
 registerSelfToTST();
 
 async function uninitFeaturesForTST() {
@@ -80,7 +67,7 @@ function monitorTSTShutdown() {
   shutdownWatchPromise = browser.runtime.sendMessage(kTST_ID, { type: "wait-for-shutdown" })
     .then((result) => {
       console.log("TST-Lock: wait-for-shutdown resolved with:", result);
-      // Under normal circumstances when TST is running, the promise does not resolve.
+      uninitFeaturesForTST();
     })
     .catch((error) => {
       console.log("TST-Lock: wait-for-shutdown promise rejected/disconnected: " + error);
@@ -170,13 +157,16 @@ browser.tabs.onRemoved.addListener(async (tabId, removeInfo = {}) => {
   }
 });
 
+let isLoadingLocks = false;
+
 async function loadStoredLockStates() {
-  if (locksLoaded) {
+  if (locksLoaded || isLoadingLocks) {
     console.log("TST-Lock: loadStoredLockStates - Locks already loaded, skipping");
     return;
   }
   
   console.log("TST-Lock: Inside loadStoredLockStates");
+  isLoadingLocks = true;
   locksLoaded = true;
   lockedTabs.clear();
   
@@ -211,5 +201,8 @@ async function loadStoredLockStates() {
     
   } catch (error) {
     console.log("TST-Lock: Error querying tabs: " + error);
+    locksLoaded = false;
+  } finally {
+    isLoadingLocks = false;
   }
 }
