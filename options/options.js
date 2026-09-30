@@ -33,6 +33,9 @@ const customFeedback = document.getElementById("custom-feedback");
 const resetBtn = document.getElementById("reset-default-btn");
 const statusMsg = document.getElementById("status-msg");
 const openTabBtn = document.getElementById("open-tab-btn");
+const tabNav = document.getElementById("tab-nav");
+let tabNavBtns = [];
+let tabPanels = [];
 
 let currentConfig = { ...DEFAULT_CONFIG };
 let recentList = [];
@@ -139,6 +142,60 @@ function handleSizeChange(newSize, shouldSave = true) {
   }
 }
 
+function switchTab(tabId, saveSession = true) {
+  if (!tabId) return;
+  tabNavBtns.forEach((btn) => {
+    const isTarget = btn.getAttribute("data-tab") === tabId;
+    btn.classList.toggle("active", isTarget);
+    btn.setAttribute("aria-selected", isTarget ? "true" : "false");
+    btn.tabIndex = isTarget ? 0 : -1;
+  });
+
+  tabPanels.forEach((panel) => {
+    const isTarget = panel.getAttribute("data-panel") === tabId;
+    panel.classList.toggle("active", isTarget);
+    panel.hidden = !isTarget;
+  });
+
+  if (saveSession) {
+    try {
+      sessionStorage.setItem("tst_active_tab", tabId);
+    } catch (_) {}
+  }
+}
+
+function handleTabClick(event) {
+  const btn = event.target.closest(".tab-nav-btn");
+  if (!btn) return;
+  const tabId = btn.getAttribute("data-tab");
+  switchTab(tabId, true);
+}
+
+function handleTabKeydown(event) {
+  const btn = event.target.closest(".tab-nav-btn");
+  if (!btn) return;
+  const currentIndex = tabNavBtns.indexOf(btn);
+  if (currentIndex === -1) return;
+
+  let newIndex = null;
+  if (event.key === "ArrowRight") {
+    newIndex = (currentIndex + 1) % tabNavBtns.length;
+  } else if (event.key === "ArrowLeft") {
+    newIndex = (currentIndex - 1 + tabNavBtns.length) % tabNavBtns.length;
+  } else if (event.key === "Home") {
+    newIndex = 0;
+  } else if (event.key === "End") {
+    newIndex = tabNavBtns.length - 1;
+  }
+
+  if (newIndex !== null) {
+    event.preventDefault();
+    const nextBtn = tabNavBtns[newIndex];
+    nextBtn.focus();
+    switchTab(nextBtn.getAttribute("data-tab"), true);
+  }
+}
+
 function updateVisibilityUI(visibility) {
   const vis = visibility === "hover" ? "hover" : "always";
   const buttons = document.querySelectorAll(".visibility-btn");
@@ -203,8 +260,8 @@ function updatePreview(config) {
   const translateY = -Math.round((size * 0.09) * 10) / 10;
 
   previewLock.style.fontSize = `${size}px`;
-  previewLock.style.width = `${Math.max(20, size + 4)}px`;
-  previewLock.style.height = `${Math.max(20, size + 4)}px`;
+  previewLock.style.width = "24px";
+  previewLock.style.height = "24px";
 
   if (config.type === "bundled") {
     previewLock.style.transform = "translateY(-0.5px)";
@@ -295,6 +352,23 @@ async function loadConfig() {
 
     updatePreview(stored);
     updateActiveButton(stored);
+
+    // Activate initial tab based on stored setting or previous session tab
+    let initialTab = null;
+    try {
+      initialTab = sessionStorage.getItem("tst_active_tab");
+    } catch (_) {}
+
+    if (!initialTab) {
+      if (stored.type === "custom-emoji") {
+        initialTab = "custom";
+      } else if (stored.type === "bundled") {
+        initialTab = "bundled";
+      } else {
+        initialTab = "presets";
+      }
+    }
+    switchTab(initialTab, false);
   } catch (err) {
     console.error("TST-Lock: Failed to load iconConfig:", err);
     updatePreview(DEFAULT_CONFIG);
@@ -398,6 +472,7 @@ function handleReset() {
   }
   updateSizeUI(DEFAULT_CONFIG.size);
   updateVisibilityUI(DEFAULT_CONFIG.visibility);
+  switchTab("presets", true);
   saveConfig(DEFAULT_CONFIG);
 }
 
@@ -419,9 +494,16 @@ function handleThemeToggle(event) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  tabNavBtns = Array.from(document.querySelectorAll(".tab-nav-btn"));
+  tabPanels = Array.from(document.querySelectorAll(".tab-panel"));
+
   const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
   setPreviewTheme(prefersDark ? "dark" : "light");
 
+  if (tabNav) {
+    tabNav.addEventListener("click", handleTabClick);
+    tabNav.addEventListener("keydown", handleTabKeydown);
+  }
   if (themeToggleGroup) themeToggleGroup.addEventListener("click", handleThemeToggle);
   if (sizeSlider) {
     sizeSlider.addEventListener("input", () => handleSizeChange(sizeSlider.value, false));

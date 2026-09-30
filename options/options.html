@@ -24,10 +24,10 @@
       </button>
     </header>
 
-    <!-- Light / Dark Tab Tester Section -->
+    <!-- Light / Dark Tab Tester Section (Pinned Preview) -->
     <section class="card preview-card">
       <div class="card-header-row">
-        <h2 class="card-title">Light / Dark Tab Tester</h2>
+        <h2 class="card-title">Live Tab Preview</h2>
         <div class="theme-toggle-group" id="theme-toggle-group" role="group" aria-label="Tab Preview Theme">
           <button type="button" class="theme-toggle-btn active" data-preview-theme="light" title="Test on light tab background">☀️ Light</button>
           <button type="button" class="theme-toggle-btn" data-preview-theme="dark" title="Test on dark tab background">🌙 Dark</button>
@@ -45,183 +45,204 @@
       </p>
     </section>
 
-    <!-- Lock Settings Row -->
-    <div class="settings-row">
-      <!-- Lock Size Adjustment -->
-      <section class="card size-card">
-        <div class="card-header-row">
-          <h2 class="card-title">Lock Size</h2>
-          <span id="size-badge" class="size-badge">16px (Default)</span>
-        </div>
-        <div class="size-control-row">
-          <button type="button" id="size-decrease-btn" class="size-step-btn" title="Decrease size" aria-label="Decrease size">−</button>
-          <div class="slider-container">
-            <input type="range" id="size-slider" min="12" max="24" step="1" value="16" aria-label="Lock icon size in pixels">
-            <div class="slider-ticks-bar" aria-hidden="true">
-              <span class="tick-mark" style="left: 0%;" title="12px"></span>
-              <span class="tick-mark" style="left: 16.667%;" title="14px"></span>
-              <span class="tick-mark tick-default" style="left: 33.333%;" title="16px (Default)"></span>
-              <span class="tick-mark" style="left: 50%;" title="18px"></span>
-              <span class="tick-mark" style="left: 66.667%;" title="20px"></span>
-              <span class="tick-mark" style="left: 83.333%;" title="22px"></span>
-              <span class="tick-mark" style="left: 100%;" title="24px"></span>
-            </div>
-          </div>
-          <button type="button" id="size-increase-btn" class="size-step-btn" title="Increase size" aria-label="Increase size">+</button>
-          <button type="button" id="size-reset-btn" class="text-link-btn size-reset-btn" title="Reset to default size">Reset</button>
-        </div>
-        <div class="size-ticks">
-          <span class="tick-label-start">12px (Small)</span>
-          <span class="tick-label-default">16px (Default)</span>
-          <span class="tick-label-end">24px (Large)</span>
+    <!-- Tab Navigation -->
+    <nav class="tab-nav" id="tab-nav" role="tablist" aria-label="Settings Categories">
+      <button type="button" class="tab-nav-btn active" role="tab" id="tab-btn-presets" data-tab="presets" aria-selected="true" aria-controls="panel-presets" tabindex="0">
+        Preset<br>Emojis
+      </button>
+      <button type="button" class="tab-nav-btn" role="tab" id="tab-btn-custom" data-tab="custom" aria-selected="false" aria-controls="panel-custom" tabindex="-1">
+        Custom<br>Graphics
+      </button>
+      <button type="button" class="tab-nav-btn" role="tab" id="tab-btn-bundled" data-tab="bundled" aria-selected="false" aria-controls="panel-bundled" tabindex="-1">
+        Bundled<br>Icons
+      </button>
+      <button type="button" class="tab-nav-btn" role="tab" id="tab-btn-settings" data-tab="settings" aria-selected="false" aria-controls="panel-settings" tabindex="-1">
+        Size &amp;<br>Mode
+      </button>
+    </nav>
+
+    <!-- Tab Panels Container -->
+    <div class="tab-panels-wrapper">
+      <!-- Panel 1: Presets -->
+      <section class="card tab-panel active" id="panel-presets" role="tabpanel" aria-labelledby="tab-btn-presets" data-panel="presets">
+        <h2 class="card-title">Preset Emojis</h2>
+        <div class="options-grid emoji-grid" id="preset-emojis">
+          <button type="button" class="option-btn active" data-type="emoji" data-value="🔒" title="Padlock (Default)">
+            <span class="emoji-display">🔒</span>
+            <span class="option-name">Default</span>
+          </button>
+          <button type="button" class="option-btn" data-type="emoji" data-value="🔐" title="Lock with Key">
+            <span class="emoji-display">🔐</span>
+            <span class="option-name">Keyed</span>
+          </button>
+          <button type="button" class="option-btn" data-type="emoji" data-value="🔑" title="Key">
+            <span class="emoji-display">🔑</span>
+            <span class="option-name">Key</span>
+          </button>
+          <button type="button" class="option-btn" data-type="emoji" data-value="🗝️" title="Vintage Key">
+            <span class="emoji-display">🗝️</span>
+            <span class="option-name">Vintage</span>
+          </button>
+          <button type="button" class="option-btn" data-type="emoji" data-value="🛡️" title="Shield">
+            <span class="emoji-display">🛡️</span>
+            <span class="option-name">Shield</span>
+          </button>
+          <button type="button" class="option-btn" data-type="emoji" data-value="📌" title="Pushpin">
+            <span class="emoji-display">📌</span>
+            <span class="option-name">Pin</span>
+          </button>
+          <button type="button" class="option-btn" data-type="emoji" data-value="⛔" title="No Entry">
+            <span class="emoji-display">⛔</span>
+            <span class="option-name">No Entry</span>
+          </button>
+          <button type="button" class="option-btn" data-type="emoji" data-value="🛑" title="Stop Sign">
+            <span class="emoji-display">🛑</span>
+            <span class="option-name">Stop</span>
+          </button>
+          <button type="button" class="option-btn" data-type="emoji" data-value="🚫" title="Prohibited">
+            <span class="emoji-display">🚫</span>
+            <span class="option-name">Blocked</span>
+          </button>
+          <button type="button" class="option-btn" data-type="emoji" data-value="⚠️" title="Warning">
+            <span class="emoji-display">⚠️</span>
+            <span class="option-name">Warning</span>
+          </button>
+          <button type="button" class="option-btn" data-type="emoji" data-value="⚓" title="Anchor">
+            <span class="emoji-display">⚓</span>
+            <span class="option-name">Anchor</span>
+          </button>
+          <button type="button" class="option-btn" data-type="emoji" data-value="🧱" title="Brick Wall">
+            <span class="emoji-display">🧱</span>
+            <span class="option-name">Wall</span>
+          </button>
         </div>
       </section>
 
-      <!-- Lock Visibility Setting -->
-      <section class="card visibility-card">
-        <div class="card-header-row">
-          <h2 class="card-title">Lock Visibility</h2>
+      <!-- Panel 2: Custom -->
+      <section class="card tab-panel" id="panel-custom" role="tabpanel" aria-labelledby="tab-btn-custom" data-panel="custom" hidden>
+        <h2 class="card-title">Custom Emoji or Symbol</h2>
+        <p class="card-desc">
+          The lock icon replaces the tab's close button (approx. 16×16px). For the best appearance, use a <strong>single emoji or Unicode symbol</strong>. Multi-letter words like “text” will overflow or be clipped.
+        </p>
+
+        <!-- Recently Used chips -->
+        <div class="chips-wrapper" id="recent-wrapper" hidden>
+          <div class="chips-header">
+            <span class="chips-label">Recently Used:</span>
+            <button type="button" id="clear-recent-btn" class="text-link-btn" title="Clear recently used symbols">Clear</button>
+          </div>
+          <div class="chips-list" id="recent-chips"></div>
         </div>
-        <div class="visibility-toggle-group" id="visibility-toggle-group" role="radiogroup" aria-label="Lock Visibility Mode">
-          <button type="button" class="visibility-btn active" data-visibility="always" role="radio" aria-checked="true">
-            Always Display
+
+        <!-- Quick-pick inspiration chips -->
+        <div class="chips-wrapper">
+          <span class="chips-label">Quick Ideas:</span>
+          <div class="chips-list" id="quick-chips">
+            <button type="button" class="chip-btn" data-symbol="⭐️" title="Star">⭐️</button>
+            <button type="button" class="chip-btn" data-symbol="🏷️" title="Tag">🏷️</button>
+            <button type="button" class="chip-btn" data-symbol="💎" title="Gem">💎</button>
+            <button type="button" class="chip-btn" data-symbol="🔔" title="Bell">🔔</button>
+            <button type="button" class="chip-btn" data-symbol="🔖" title="Bookmark">🔖</button>
+            <button type="button" class="chip-btn" data-symbol="★" title="Black Star">★</button>
+            <button type="button" class="chip-btn" data-symbol="⚿" title="Key Symbol">⚿</button>
+            <button type="button" class="chip-btn" data-symbol="⚡" title="Lightning">⚡</button>
+            <button type="button" class="chip-btn" data-symbol="❄️" title="Snowflake (Freeze)">❄️</button>
+            <button type="button" class="chip-btn" data-symbol="🧷" title="Safety Pin">🧷</button>
+          </div>
+        </div>
+
+        <!-- Input and Action -->
+        <div class="custom-input-group">
+          <div class="input-wrapper">
+            <input type="text" id="custom-emoji-input" placeholder="Paste or type an emoji (e.g. ⭐️, ★)" autocomplete="off" spellcheck="false">
+            <span id="char-counter" class="char-counter">0 / 1</span>
+          </div>
+          <button type="button" id="apply-custom-btn" class="action-btn" disabled>Use Custom Emoji</button>
+        </div>
+
+        <!-- Dynamic Feedback Area -->
+        <div id="custom-feedback" class="feedback-msg hint" aria-live="polite">
+          Enter 1 emoji or symbol to preview.
+        </div>
+
+        <!-- Reference links -->
+        <div class="help-links">
+          <span>Need inspiration?</span>
+          <a href="https://emojipedia.org" target="_blank" rel="noopener noreferrer">Browse Emojipedia ↗</a>
+          <span class="link-divider">•</span>
+          <a href="https://symbl.cc/en/" target="_blank" rel="noopener noreferrer">Search Unicode Symbols ↗</a>
+        </div>
+      </section>
+
+      <!-- Panel 3: Bundled Graphic Icons -->
+      <section class="card tab-panel" id="panel-bundled" role="tabpanel" aria-labelledby="tab-btn-bundled" data-panel="bundled" hidden>
+        <h2 class="card-title">Bundled Graphic Icons</h2>
+        <div class="options-grid image-grid" id="preset-bundled">
+          <button type="button" class="option-btn" data-type="bundled" data-value="images/lock(24x24).png" title="Classic Lock" aria-label="Classic Lock">
+            <img src="../images/lock(24x24).png" alt="Classic Lock" class="bundled-icon-img">
           </button>
-          <button type="button" class="visibility-btn" data-visibility="hover" role="radio" aria-checked="false">
-            Only When Hovering
+          <button type="button" class="option-btn" data-type="bundled" data-value="images/Actions-document-encrypt-icon.png" title="Encrypt Lock" aria-label="Encrypt Lock">
+            <img src="../images/Actions-document-encrypt-icon.png" alt="Encrypt Lock" class="bundled-icon-img">
           </button>
+          <button type="button" class="option-btn" data-type="bundled" data-value="images/Secure24.png" title="Green Secure Lock" aria-label="Green Secure Lock">
+            <img src="../images/Secure24.png" alt="Green Secure Lock" class="bundled-icon-img">
+          </button>
+          <button type="button" class="option-btn" data-type="bundled" data-value="images/lock-icon.png" title="Modern Lock" aria-label="Modern Lock">
+            <img src="../images/lock-icon.png" alt="Modern Lock" class="bundled-icon-img">
+          </button>
+        </div>
+      </section>
+
+      <!-- Panel 4: Size & Visibility Settings -->
+      <section class="card tab-panel" id="panel-settings" role="tabpanel" aria-labelledby="tab-btn-settings" data-panel="settings" hidden>
+        <div class="settings-stack">
+          <!-- Size Control -->
+          <div class="settings-subcard">
+            <div class="card-header-row">
+              <h2 class="card-title">Lock Size</h2>
+              <span id="size-badge" class="size-badge">16px (Default)</span>
+            </div>
+            <div class="size-control-row">
+              <button type="button" id="size-decrease-btn" class="size-step-btn" title="Decrease size" aria-label="Decrease size">−</button>
+              <div class="slider-container">
+                <input type="range" id="size-slider" min="12" max="24" step="1" value="16" aria-label="Lock icon size in pixels">
+                <div class="slider-ticks-bar" aria-hidden="true">
+                  <span class="tick-mark" style="left: 0%;" title="12px"></span>
+                  <span class="tick-mark" style="left: 16.667%;" title="14px"></span>
+                  <span class="tick-mark tick-default" style="left: 33.333%;" title="16px (Default)"></span>
+                  <span class="tick-mark" style="left: 50%;" title="18px"></span>
+                  <span class="tick-mark" style="left: 66.667%;" title="20px"></span>
+                  <span class="tick-mark" style="left: 83.333%;" title="22px"></span>
+                  <span class="tick-mark" style="left: 100%;" title="24px"></span>
+                </div>
+              </div>
+              <button type="button" id="size-increase-btn" class="size-step-btn" title="Increase size" aria-label="Increase size">+</button>
+              <button type="button" id="size-reset-btn" class="text-link-btn size-reset-btn" title="Reset to default size">Reset</button>
+            </div>
+            <div class="size-ticks">
+              <span class="tick-label-start">12px (Small)</span>
+              <span class="tick-label-default">16px (Default)</span>
+              <span class="tick-label-end">24px (Large)</span>
+            </div>
+          </div>
+
+          <!-- Visibility Control -->
+          <div class="settings-subcard">
+            <div class="card-header-row">
+              <h2 class="card-title">Lock Visibility</h2>
+            </div>
+            <div class="visibility-toggle-group" id="visibility-toggle-group" role="radiogroup" aria-label="Lock Visibility Mode">
+              <button type="button" class="visibility-btn active" data-visibility="always" role="radio" aria-checked="true">
+                Always Display
+              </button>
+              <button type="button" class="visibility-btn" data-visibility="hover" role="radio" aria-checked="false">
+                Only When Hovering
+              </button>
+            </div>
+          </div>
         </div>
       </section>
     </div>
-
-    <!-- Preset Emojis -->
-    <section class="card">
-      <h2 class="card-title">Preset Emojis</h2>
-      <div class="options-grid emoji-grid" id="preset-emojis">
-        <button type="button" class="option-btn active" data-type="emoji" data-value="🔒" title="Padlock (Default)">
-          <span class="emoji-display">🔒</span>
-          <span class="option-name">Default</span>
-        </button>
-        <button type="button" class="option-btn" data-type="emoji" data-value="🔐" title="Lock with Key">
-          <span class="emoji-display">🔐</span>
-          <span class="option-name">Keyed</span>
-        </button>
-        <button type="button" class="option-btn" data-type="emoji" data-value="🔑" title="Key">
-          <span class="emoji-display">🔑</span>
-          <span class="option-name">Key</span>
-        </button>
-        <button type="button" class="option-btn" data-type="emoji" data-value="🗝️" title="Vintage Key">
-          <span class="emoji-display">🗝️</span>
-          <span class="option-name">Vintage</span>
-        </button>
-        <button type="button" class="option-btn" data-type="emoji" data-value="🛡️" title="Shield">
-          <span class="emoji-display">🛡️</span>
-          <span class="option-name">Shield</span>
-        </button>
-        <button type="button" class="option-btn" data-type="emoji" data-value="📌" title="Pushpin">
-          <span class="emoji-display">📌</span>
-          <span class="option-name">Pin</span>
-        </button>
-        <button type="button" class="option-btn" data-type="emoji" data-value="⛔" title="No Entry">
-          <span class="emoji-display">⛔</span>
-          <span class="option-name">No Entry</span>
-        </button>
-        <button type="button" class="option-btn" data-type="emoji" data-value="🛑" title="Stop Sign">
-          <span class="emoji-display">🛑</span>
-          <span class="option-name">Stop</span>
-        </button>
-        <button type="button" class="option-btn" data-type="emoji" data-value="🚫" title="Prohibited">
-          <span class="emoji-display">🚫</span>
-          <span class="option-name">Blocked</span>
-        </button>
-        <button type="button" class="option-btn" data-type="emoji" data-value="⚠️" title="Warning">
-          <span class="emoji-display">⚠️</span>
-          <span class="option-name">Warning</span>
-        </button>
-        <button type="button" class="option-btn" data-type="emoji" data-value="⚓" title="Anchor">
-          <span class="emoji-display">⚓</span>
-          <span class="option-name">Anchor</span>
-        </button>
-        <button type="button" class="option-btn" data-type="emoji" data-value="🧱" title="Brick Wall">
-          <span class="emoji-display">🧱</span>
-          <span class="option-name">Wall</span>
-        </button>
-      </div>
-    </section>
-
-    <!-- Bundled Graphic Icons -->
-    <section class="card">
-      <h2 class="card-title">Bundled Graphic Icons</h2>
-      <div class="options-grid image-grid" id="preset-bundled">
-        <button type="button" class="option-btn" data-type="bundled" data-value="images/lock(24x24).png" title="Classic Lock" aria-label="Classic Lock">
-          <img src="../images/lock(24x24).png" alt="Classic Lock" class="bundled-icon-img">
-        </button>
-        <button type="button" class="option-btn" data-type="bundled" data-value="images/Actions-document-encrypt-icon.png" title="Encrypt Lock" aria-label="Encrypt Lock">
-          <img src="../images/Actions-document-encrypt-icon.png" alt="Encrypt Lock" class="bundled-icon-img">
-        </button>
-        <button type="button" class="option-btn" data-type="bundled" data-value="images/Secure24.png" title="Green Secure Lock" aria-label="Green Secure Lock">
-          <img src="../images/Secure24.png" alt="Green Secure Lock" class="bundled-icon-img">
-        </button>
-        <button type="button" class="option-btn" data-type="bundled" data-value="images/lock-icon.png" title="Modern Lock" aria-label="Modern Lock">
-          <img src="../images/lock-icon.png" alt="Modern Lock" class="bundled-icon-img">
-        </button>
-      </div>
-    </section>
-
-    <!-- Custom Emoji / Character -->
-    <section class="card">
-      <h2 class="card-title">Custom Emoji or Symbol</h2>
-      <p class="card-desc">
-        The lock icon replaces the tab's close button (approx. 16×16px). For the best appearance, use a <strong>single emoji or Unicode symbol</strong>. Multi-letter words like “text” will overflow or be clipped.
-      </p>
-
-      <!-- Recently Used chips (shown when history exists) -->
-      <div class="chips-wrapper" id="recent-wrapper" hidden>
-        <div class="chips-header">
-          <span class="chips-label">Recently Used:</span>
-          <button type="button" id="clear-recent-btn" class="text-link-btn" title="Clear recently used symbols">Clear</button>
-        </div>
-        <div class="chips-list" id="recent-chips"></div>
-      </div>
-
-      <!-- Quick-pick inspiration chips -->
-      <div class="chips-wrapper">
-        <span class="chips-label">Quick Ideas:</span>
-        <div class="chips-list" id="quick-chips">
-          <button type="button" class="chip-btn" data-symbol="⭐️" title="Star">⭐️</button>
-          <button type="button" class="chip-btn" data-symbol="🏷️" title="Tag">🏷️</button>
-          <button type="button" class="chip-btn" data-symbol="💎" title="Gem">💎</button>
-          <button type="button" class="chip-btn" data-symbol="🔔" title="Bell">🔔</button>
-          <button type="button" class="chip-btn" data-symbol="🔖" title="Bookmark">🔖</button>
-          <button type="button" class="chip-btn" data-symbol="★" title="Black Star">★</button>
-          <button type="button" class="chip-btn" data-symbol="⚿" title="Key Symbol">⚿</button>
-          <button type="button" class="chip-btn" data-symbol="⚡" title="Lightning">⚡</button>
-          <button type="button" class="chip-btn" data-symbol="❄️" title="Snowflake (Freeze)">❄️</button>
-          <button type="button" class="chip-btn" data-symbol="🧷" title="Safety Pin">🧷</button>
-        </div>
-      </div>
-
-      <!-- Input and Action -->
-      <div class="custom-input-group">
-        <div class="input-wrapper">
-          <input type="text" id="custom-emoji-input" placeholder="Paste or type an emoji (e.g. ⭐️, ★)" autocomplete="off" spellcheck="false">
-          <span id="char-counter" class="char-counter">0 / 1</span>
-        </div>
-        <button type="button" id="apply-custom-btn" class="action-btn" disabled>Use Custom Emoji</button>
-      </div>
-
-      <!-- Dynamic Feedback Area -->
-      <div id="custom-feedback" class="feedback-msg hint" aria-live="polite">
-        Enter 1 emoji or symbol to preview.
-      </div>
-
-      <!-- Reference links -->
-      <div class="help-links">
-        <span>Need inspiration?</span>
-        <a href="https://emojipedia.org" target="_blank" rel="noopener noreferrer">Browse Emojipedia ↗</a>
-        <span class="link-divider">•</span>
-        <a href="https://symbl.cc/en/" target="_blank" rel="noopener noreferrer">Search Unicode Symbols ↗</a>
-      </div>
-    </section>
 
     <!-- Bottom Actions -->
     <footer class="footer">
