@@ -5,6 +5,151 @@ let shutdownWatchPromise = null;
 
 let isRegistering = false;
 
+const DEFAULT_ICON_CONFIG = {
+  type: "emoji",
+  value: "🔒",
+  size: 16,
+  visibility: "always"
+};
+
+let currentIconConfig = { ...DEFAULT_ICON_CONFIG };
+let iconConfigLoaded = false;
+
+function sanitizeEmoji(val) {
+  if (typeof val !== "string") return "🔒";
+  const clean = val.trim().replace(/["\\\r\n]/g, "");
+  if (!clean) return "🔒";
+  if (typeof Intl !== "undefined" && Intl.Segmenter) {
+    const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+    const graphemes = Array.from(segmenter.segment(clean), s => s.segment);
+    if (graphemes.length === 0) return "🔒";
+    return graphemes[0];
+  }
+  const graphemes = Array.from(clean);
+  if (graphemes.length === 0) return "🔒";
+  return graphemes[0];
+}
+
+function buildTSTStyle(iconConfig) {
+  const size = (iconConfig && typeof iconConfig.size === "number" && iconConfig.size >= 10 && iconConfig.size <= 32)
+    ? iconConfig.size
+    : 16;
+  const visibility = (iconConfig && iconConfig.visibility === "hover") ? "hover" : "always";
+  const baseOpacity = visibility === "hover" ? 0 : 1;
+  const hoverRule = visibility === "hover" ? `
+      .tab.locked:hover .closebox,
+      tab-item.locked:hover tab-closebox {
+        opacity: 1 !important;
+        transition: none !important;
+        transition-delay: 0s !important;
+      }
+  ` : "";
+  const imageSize = Math.max(10, Math.round(size * 0.94));
+  const translateY = -Math.round((size * 0.09) * 10) / 10;
+  const boxDimension = Math.max(20, size + 4);
+
+  let contentStyle;
+  if (iconConfig && iconConfig.type === "bundled") {
+    const allowedImages = [
+      "images/lock(24x24).png",
+      "images/Actions-document-encrypt-icon.png",
+      "images/Secure24.png",
+      "images/lock-icon.png",
+      "images/lock.png"
+    ];
+    const imagePath = allowedImages.includes(iconConfig.value)
+      ? iconConfig.value
+      : "images/lock(24x24).png";
+    const imageUrl = (browser.runtime && browser.runtime.getURL)
+      ? browser.runtime.getURL(imagePath)
+      : imagePath;
+    contentStyle = `
+        background: none !important;
+        content: "" !important;
+        display: inline-block !important;
+        width: ${imageSize}px !important;
+        height: ${imageSize}px !important;
+        background-image: url("${imageUrl}") !important;
+        background-size: contain !important;
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+        transform: translateY(-0.5px) !important;
+        mask: none !important;
+    `;
+  } else {
+    const emoji = sanitizeEmoji(iconConfig ? iconConfig.value : "🔒");
+    contentStyle = `
+        background: none !important;
+        content: "${emoji}";
+        font-size: ${size}px !important;
+        line-height: 1 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transform: translateY(${translateY}px) !important;
+        mask: none;
+    `;
+  }
+
+  return `
+      .tab.locked .closebox,
+      tab-item.locked tab-closebox {
+        pointer-events: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        align-self: center !important;
+        width: ${boxDimension}px !important;
+        height: ${boxDimension}px !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        opacity: ${baseOpacity} !important;
+        transition: none !important;
+        transition-delay: 0s !important;
+      }
+      ${hoverRule}
+      .tab:not(.faviconized).locked .closebox::after,
+      tab-item:not(.faviconized).locked tab-closebox::after {
+        ${contentStyle}
+      }
+  `;
+}
+
+function loadIconConfig() {
+  if (typeof browser !== "undefined" && browser.storage) {
+    const storageArea = browser.storage.sync || browser.storage.local;
+    if (storageArea && typeof storageArea.get === "function") {
+      storageArea.get({ iconConfig: DEFAULT_ICON_CONFIG })
+        .then((stored) => {
+          if (stored && stored.iconConfig) {
+            const hasChanged = stored.iconConfig.type !== currentIconConfig.type ||
+                               stored.iconConfig.value !== currentIconConfig.value ||
+                               stored.iconConfig.size !== currentIconConfig.size ||
+                               stored.iconConfig.visibility !== currentIconConfig.visibility;
+            currentIconConfig = stored.iconConfig;
+            if (hasChanged) {
+              registerSelfToTST();
+            }
+          }
+        })
+        .catch((err) => {
+          console.log("TST-Lock: Error loading icon config from storage: " + err);
+        });
+    }
+  }
+}
+loadIconConfig();
+
+if (typeof browser !== "undefined" && browser.storage && browser.storage.onChanged) {
+  browser.storage.onChanged.addListener((changes) => {
+    if (changes && changes.iconConfig) {
+      currentIconConfig = changes.iconConfig.newValue || DEFAULT_ICON_CONFIG;
+      console.log("TST-Lock: Icon configuration changed, updating TST styles");
+      registerSelfToTST();
+    }
+  });
+}
+
 async function registerSelfToTST() {
   if (isRegistering) {
     return;
@@ -17,17 +162,7 @@ async function registerSelfToTST() {
       name: "TST-Lock",
       icons: browser.runtime.getManifest().icons,
       listeningTypes: ["tab-mousedown", "tab-mouseup", "ready", "wait-for-shutdown"],
-      style: `
-        .tab.locked .closebox {
-          pointer-events: none !important;
-        }
-        .tab:not(.faviconized).locked .closebox::after {
-          background: none;
-          content: "🔒";          
-          line-height: 1;
-          mask: none;
-        }
-      `,
+      style: buildTSTStyle(currentIconConfig),
     });
 
     if (!result) {
@@ -205,4 +340,12 @@ async function loadStoredLockStates() {
   } finally {
     isLoadingLocks = false;
   }
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    buildTSTStyle,
+    sanitizeEmoji,
+    DEFAULT_ICON_CONFIG
+  };
 }

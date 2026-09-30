@@ -47,6 +47,7 @@ describe("TST-Lock Background Script", () => {
       runtime: {
         sendMessage: mockSendMessage,
         getManifest: mockGetManifest,
+        getURL: jest.fn((path) => `moz-extension://test-uuid/${path}`),
         onMessageExternal: {
           addListener: mockOnMessageExternalAddListener
         }
@@ -64,6 +65,15 @@ describe("TST-Lock Background Script", () => {
         query: mockTabsQuery,
         onRemoved: {
           addListener: mockTabsOnRemovedAddListener
+        }
+      },
+      storage: {
+        sync: {
+          get: jest.fn().mockResolvedValue({ iconConfig: { type: "emoji", value: "🔒" } }),
+          set: jest.fn().mockResolvedValue()
+        },
+        onChanged: {
+          addListener: jest.fn()
         }
       }
     };
@@ -297,4 +307,100 @@ describe("TST-Lock Background Script", () => {
     );
     expect(mockSetBadgeText).toHaveBeenLastCalledWith({ text: "1" });
   });
+
+  describe("Icon Customization & Styling", () => {
+    it("should sanitize emoji inputs safely", () => {
+      const { sanitizeEmoji } = require("../background.js");
+      expect(sanitizeEmoji("🔒")).toBe("🔒");
+      expect(sanitizeEmoji('  "🔒"\\  ')).toBe("🔒");
+      expect(sanitizeEmoji("")).toBe("🔒");
+      expect(sanitizeEmoji(null)).toBe("🔒");
+      expect(sanitizeEmoji("🛡️⚔️")).toBe("🛡️");
+      expect(sanitizeEmoji("text")).toBe("t");
+    });
+
+    it("should build valid TST CSS for emoji icons", () => {
+      const { buildTSTStyle } = require("../background.js");
+      const style = buildTSTStyle({ type: "emoji", value: "🔐" });
+      expect(style).toContain('content: "🔐";');
+      expect(style).toContain(".tab.locked .closebox");
+    });
+
+    it("should build valid TST CSS for bundled icons", () => {
+      const { buildTSTStyle } = require("../background.js");
+      const style = buildTSTStyle({ type: "bundled", value: "images/lock(24x24).png" });
+      expect(style).toContain('background-image: url("moz-extension://test-uuid/images/lock(24x24).png")');
+      expect(style).toContain("width: 15px");
+      expect(style).toContain("height: 15px");
+      expect(style).toContain("mask: none");
+    });
+
+    it("should scale dimensions and vertical centering proportionally with size setting", () => {
+      const { buildTSTStyle } = require("../background.js");
+
+      // Custom size 20px emoji
+      const style20 = buildTSTStyle({ type: "emoji", value: "🔒", size: 20 });
+      expect(style20).toContain("font-size: 20px !important;");
+      expect(style20).toContain("transform: translateY(-1.8px) !important;");
+      expect(style20).toContain("width: 24px !important;");
+      expect(style20).toContain("height: 24px !important;");
+
+      // Custom size 12px bundled icon
+      const style12 = buildTSTStyle({ type: "bundled", value: "images/lock.png", size: 12 });
+      expect(style12).toContain("width: 11px !important;");
+      expect(style12).toContain("height: 11px !important;");
+      expect(style12).toContain("width: 20px !important;");
+      expect(style12).toContain("height: 20px !important;");
+
+      // Fallback for missing or out-of-range size
+      const styleDefault = buildTSTStyle({ type: "emoji", value: "🔒", size: 999 });
+      expect(styleDefault).toContain("font-size: 16px !important;");
+    });
+
+    it("should support always and hover visibility modes", () => {
+      const { buildTSTStyle } = require("../background.js");
+
+      // Always mode (default)
+      const styleAlways = buildTSTStyle({ type: "emoji", value: "🔒", visibility: "always" });
+      expect(styleAlways).toContain("opacity: 1 !important;");
+      expect(styleAlways).not.toContain(".tab.locked:hover .closebox");
+
+      // Hover mode
+      const styleHover = buildTSTStyle({ type: "emoji", value: "🔒", visibility: "hover" });
+      expect(styleHover).toContain("opacity: 0 !important;");
+      expect(styleHover).toContain(".tab.locked:hover .closebox");
+      expect(styleHover).toContain("opacity: 1 !important;");
+    });
+
+    it("should re-register with TST when storage onChanged fires", async () => {
+      let storageCallback;
+      global.browser.storage.onChanged.addListener = jest.fn((cb) => {
+        storageCallback = cb;
+      });
+
+      require("../background.js");
+      await Promise.resolve();
+
+      expect(storageCallback).toBeDefined();
+      mockSendMessage.mockClear();
+
+      // Trigger storage change with new icon
+      storageCallback({
+        iconConfig: {
+          newValue: { type: "emoji", value: "🛡️" }
+        }
+      });
+
+      await Promise.resolve();
+
+      expect(mockSendMessage).toHaveBeenCalledWith(
+        "treestyletab@piro.sakura.ne.jp",
+        expect.objectContaining({
+          type: "register-self",
+          style: expect.stringContaining('content: "🛡️";')
+        })
+      );
+    });
+  });
 });
+
