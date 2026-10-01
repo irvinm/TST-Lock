@@ -363,7 +363,8 @@ async function loadConfig() {
     const result = await storageArea.get({
       iconConfig: DEFAULT_CONFIG,
       recentCustomEmojis: [],
-      pageTheme: null
+      pageTheme: null,
+      previewTheme: null
     });
     const stored = result.iconConfig || DEFAULT_CONFIG;
     const size = typeof stored.size === "number" ? stored.size : 16;
@@ -394,12 +395,29 @@ async function loadConfig() {
     updatePreview(stored);
     updateActiveButton(stored);
 
-    // Apply saved page theme or detect system preference
-    if (result.pageTheme) {
-      applyPageTheme(result.pageTheme, false);
-    } else {
-      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-      applyPageTheme(prefersDark ? "dark" : "light", false);
+    // Determine theme defaults from browser mode on first run and save them so they don't change later
+    const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const initialThemeFromBrowser = prefersDark ? "dark" : "light";
+    const initialSettingsToSave = {};
+
+    let pageTheme = result.pageTheme;
+    if (!pageTheme) {
+      pageTheme = initialThemeFromBrowser;
+      initialSettingsToSave.pageTheme = pageTheme;
+    }
+    applyPageTheme(pageTheme, false);
+
+    let previewTheme = result.previewTheme;
+    if (!previewTheme) {
+      previewTheme = initialThemeFromBrowser;
+      initialSettingsToSave.previewTheme = previewTheme;
+    }
+    setPreviewTheme(previewTheme, false);
+
+    if (Object.keys(initialSettingsToSave).length > 0 && storageArea) {
+      storageArea.set(initialSettingsToSave).catch((err) => {
+        console.warn("TST-Lock: Failed to save initial theme settings:", err);
+      });
     }
 
     // Activate initial tab based on stored setting or previous session tab
@@ -525,21 +543,30 @@ function handleReset() {
   saveConfig(DEFAULT_CONFIG);
 }
 
-function setPreviewTheme(mode) {
+let currentPreviewTheme = "light";
+
+function setPreviewTheme(mode, save = false) {
   if (!mockTabContainer) return;
-  const isDark = mode === "dark";
+  currentPreviewTheme = mode === "dark" ? "dark" : "light";
+  const isDark = currentPreviewTheme === "dark";
   document.querySelectorAll(".theme-toggle-btn").forEach((b) => {
     b.classList.toggle("active", b.getAttribute("data-preview-theme") === (isDark ? "dark" : "light"));
   });
 
   mockTabContainer.classList.remove("theme-light", "theme-dark");
   mockTabContainer.classList.add(isDark ? "theme-dark" : "theme-light");
+
+  if (save && storageArea) {
+    storageArea.set({ previewTheme: currentPreviewTheme }).catch((err) => {
+      console.warn("TST-Lock: Failed to save previewTheme:", err);
+    });
+  }
 }
 
 function handleThemeToggle(event) {
   const btn = event.target.closest(".theme-toggle-btn");
   if (!btn) return;
-  setPreviewTheme(btn.getAttribute("data-preview-theme"));
+  setPreviewTheme(btn.getAttribute("data-preview-theme"), true);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -547,21 +574,11 @@ document.addEventListener("DOMContentLoaded", () => {
   tabPanels = Array.from(document.querySelectorAll(".tab-panel"));
 
   const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-  setPreviewTheme(prefersDark ? "dark" : "light");
+  applyPageTheme(prefersDark ? "dark" : "light", false);
+  setPreviewTheme(prefersDark ? "dark" : "light", false);
 
   if (pageThemeBtn) {
     pageThemeBtn.addEventListener("click", handlePageThemeToggle);
-  }
-  if (window.matchMedia) {
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-      if (storageArea) {
-        storageArea.get("pageTheme").then((res) => {
-          if (!res || !res.pageTheme) {
-            applyPageTheme(e.matches ? "dark" : "light", false);
-          }
-        });
-      }
-    });
   }
 
   if (tabNav) {
@@ -618,3 +635,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadConfig();
 });
+
+if (typeof browser !== "undefined" && browser.storage && browser.storage.onChanged) {
+  browser.storage.onChanged.addListener((changes) => {
+    if (changes) {
+      if (changes.pageTheme && changes.pageTheme.newValue) {
+        applyPageTheme(changes.pageTheme.newValue, false);
+      }
+      if (changes.previewTheme && changes.previewTheme.newValue) {
+        setPreviewTheme(changes.previewTheme.newValue, false);
+      }
+    }
+  });
+}
