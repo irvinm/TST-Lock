@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TST Lock Updated - Configuration Options Available</title>
+  <link rel="icon" type="image/png" href="../images/lock.png">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body class="options-view update-view">
+  <div class="container update-container">
+    <header class="header">
+      <div class="header-main">
+        <img src="../images/lock.png" alt="TST Lock Icon" class="header-icon">
+        <div>
+          <h1>TST Lock Updated</h1>
+          <p class="subtitle">New configuration options are now available</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button type="button" id="page-theme-btn" class="icon-link-btn" title="Switch to dark theme" aria-label="Toggle page theme">
+          <span id="page-theme-icon" class="theme-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </span>
+        </button>
+      </div>
+    </header>
+
+    <main class="card update-card">
+      <div class="update-hero">
+        <div class="update-hero-icon" aria-hidden="true">✨</div>
+        <div class="update-hero-text">
+          <h2 class="card-title">TST Lock Now Has Configuration Options!</h2>
+          <p class="card-desc">
+            With this update, you can now fully customize how locked tabs appear in Tree Style Tab—including custom icons, adjustable sizing, and visibility modes.
+          </p>
+        </div>
+      </div>
+
+      <div class="access-methods-section">
+        <h3 class="section-subtitle">How to Access Options:</h3>
+        <div class="access-grid">
+          <div class="access-box">
+            <div class="access-badge-preview" aria-hidden="true">
+              <div class="mock-addon-button" title="TST Lock Toolbar Icon">
+                <img src="../images/lock.png" alt="TST Lock Icon" class="addon-badge-img">
+              </div>
+            </div>
+            <div class="access-content">
+              <h4>1. From the Add-on Toolbar Icon</h4>
+              <p>Click the <strong>TST Lock icon</strong> in your browser toolbar or from Firefox's <strong>Extensions (puzzle piece) menu</strong>.</p>
+            </div>
+          </div>
+
+          <div class="access-box">
+            <div class="access-badge-preview" aria-hidden="true">
+              <div class="mock-addon-button extension-button" title="Firefox Add-ons Manager">
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="m13.375 16-9.75 0A1.626 1.626 0 0 1 2 14.375L2 11.5a.75.75 0 0 1 .75-.75l1.75 0c.689 0 1.25-.561 1.25-1.25S5.189 8.25 4.5 8.25l-1.75 0A.75.75 0 0 1 2 7.5l0-1.875C2 4.728 2.728 4 3.625 4L6 4l0-1.352C6 1.341 6.938.147 8.238.014A2.502 2.502 0 0 1 11 2.5L11 4l2.375 0C14.272 4 15 4.728 15 5.625l0 8.75c0 .897-.728 1.625-1.625 1.625zM3.25 12l0 2.15.6.6 9.3 0 .6-.6 0-8.3-.6-.6-2.65 0a.75.75 0 0 1-.75-.75l0-2c0-.689-.561-1.25-1.25-1.25s-1.25.561-1.25 1.25l0 2a.75.75 0 0 1-.75.75l-2.75 0-.5.6 0 1.15 1.103 0c1.308 0 2.502.939 2.634 2.24A2.503 2.503 0 0 1 4.5 12l-1.25 0z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="access-content">
+              <h4>2. From about:addons</h4>
+              <p>Open <strong>about:addons</strong> (press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd>), click <strong>TST Lock</strong>, and switch to the <strong>Options</strong> tab.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="features-summary-section">
+        <h3 class="section-subtitle">What You Can Customize:</h3>
+        <ul class="features-list">
+          <li>
+            <span class="feature-bullet" aria-hidden="true">🔒</span>
+            <div>
+              <strong>Preset &amp; Custom Indicators:</strong> Choose from popular presets, bundled classic lock icons, or type any single emoji or Unicode symbol (e.g. ⭐️, 🛡️, 📌).
+            </div>
+          </li>
+          <li>
+            <span class="feature-bullet" aria-hidden="true">📐</span>
+            <div>
+              <strong>Adjustable Size:</strong> Scale the lock icon from 12px to 24px to match your preferred tab height.
+            </div>
+          </li>
+          <li>
+            <span class="feature-bullet" aria-hidden="true">👁️</span>
+            <div>
+              <strong>Hover-Only Visibility:</strong> Choose between always displaying the lock icon or only showing it when hovering over locked tabs.
+            </div>
+          </li>
+          <li>
+            <span class="feature-bullet" aria-hidden="true">☀️</span>
+            <div>
+              <strong>Live Tab Preview:</strong> Test your chosen indicator against simulated light and dark tab backgrounds before saving.
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="update-actions">
+        <button type="button" id="open-settings-btn" class="action-btn">Open Settings Now</button>
+        <button type="button" id="close-tab-btn" class="secondary-btn">Close This Tab</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="update.js"></script>
+</body>
+</html>

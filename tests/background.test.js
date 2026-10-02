@@ -4,16 +4,21 @@ describe("TST-Lock Background Script", () => {
   let mockSendMessage;
   let mockGetManifest;
   let mockOnMessageExternalAddListener;
+  let mockOnInstalledAddListener;
   let mockSetBadgeBackgroundColor;
   let mockSetBadgeText;
   let mockGetTabValue;
   let mockSetTabValue;
   let mockRemoveTabValue;
   let mockTabsQuery;
+  let mockTabsCreate;
   let mockTabsOnRemovedAddListener;
+  let mockStorageLocalGet;
+  let mockStorageLocalSet;
 
   let externalMessageCallback;
   let tabRemovedCallback;
+  let installedCallback;
 
   beforeEach(() => {
     jest.useFakeTimers();
@@ -24,11 +29,16 @@ describe("TST-Lock Background Script", () => {
       return Promise.resolve({ success: true });
     });
     mockGetManifest = jest.fn().mockReturnValue({
+      version: "1.2.0",
       icons: { "128": "images/lock.png" }
     });
 
     mockOnMessageExternalAddListener = jest.fn((callback) => {
       externalMessageCallback = callback;
+    });
+
+    mockOnInstalledAddListener = jest.fn((callback) => {
+      installedCallback = callback;
     });
 
     mockSetBadgeBackgroundColor = jest.fn();
@@ -39,9 +49,13 @@ describe("TST-Lock Background Script", () => {
     mockRemoveTabValue = jest.fn().mockResolvedValue(null);
 
     mockTabsQuery = jest.fn().mockResolvedValue([]);
+    mockTabsCreate = jest.fn().mockResolvedValue({ id: 101 });
     mockTabsOnRemovedAddListener = jest.fn((callback) => {
       tabRemovedCallback = callback;
     });
+
+    mockStorageLocalGet = jest.fn().mockResolvedValue({});
+    mockStorageLocalSet = jest.fn().mockResolvedValue();
 
     global.browser = {
       runtime: {
@@ -50,6 +64,9 @@ describe("TST-Lock Background Script", () => {
         getURL: jest.fn((path) => `moz-extension://test-uuid/${path}`),
         onMessageExternal: {
           addListener: mockOnMessageExternalAddListener
+        },
+        onInstalled: {
+          addListener: mockOnInstalledAddListener
         }
       },
       browserAction: {
@@ -63,6 +80,7 @@ describe("TST-Lock Background Script", () => {
       },
       tabs: {
         query: mockTabsQuery,
+        create: mockTabsCreate,
         onRemoved: {
           addListener: mockTabsOnRemovedAddListener
         }
@@ -71,6 +89,10 @@ describe("TST-Lock Background Script", () => {
         sync: {
           get: jest.fn().mockResolvedValue({ iconConfig: { type: "emoji", value: "🔒" } }),
           set: jest.fn().mockResolvedValue()
+        },
+        local: {
+          get: mockStorageLocalGet,
+          set: mockStorageLocalSet
         },
         onChanged: {
           addListener: jest.fn()
@@ -402,5 +424,64 @@ describe("TST-Lock Background Script", () => {
       );
     });
   });
+
+  describe("Version Update & Notification Handling", () => {
+    it("should open update.html page in a tab on extension update", async () => {
+      mockStorageLocalGet.mockResolvedValueOnce({ lastSeenVersion: "1.1.0" });
+
+      require("../background.js");
+      await Promise.resolve();
+
+      expect(installedCallback).toBeDefined();
+
+      await installedCallback({ reason: "update", previousVersion: "1.1.0" });
+
+      expect(mockTabsCreate).toHaveBeenCalledWith({
+        url: "moz-extension://test-uuid/options/update.html"
+      });
+      expect(mockStorageLocalSet).toHaveBeenCalledWith(expect.objectContaining({ lastSeenVersion: "1.2.0" }));
+    });
+
+    it("should not open update.html tab on initial install", async () => {
+      require("../background.js");
+      await Promise.resolve();
+
+      expect(installedCallback).toBeDefined();
+
+      mockTabsCreate.mockClear();
+
+      await installedCallback({ reason: "install" });
+
+      expect(mockTabsCreate).not.toHaveBeenCalled();
+      expect(mockStorageLocalSet).toHaveBeenCalledWith(expect.objectContaining({ lastSeenVersion: "1.2.0" }));
+    });
+
+    it("should not reopen update.html if already shown for current version", async () => {
+      mockStorageLocalGet.mockResolvedValueOnce({ lastSeenVersion: "1.2.0" });
+
+      require("../background.js");
+      await Promise.resolve();
+
+      mockTabsCreate.mockClear();
+
+      await installedCallback({ reason: "update", previousVersion: "1.1.6" });
+
+      expect(mockTabsCreate).not.toHaveBeenCalled();
+    });
+
+    it("should never reopen update.html on future version upgrades if hasSeenUpdatePage is true", async () => {
+      mockStorageLocalGet.mockResolvedValueOnce({ hasSeenUpdatePage: true, lastSeenVersion: "1.2.0" });
+
+      require("../background.js");
+      await Promise.resolve();
+
+      mockTabsCreate.mockClear();
+
+      await installedCallback({ reason: "update", previousVersion: "1.2.0" });
+
+      expect(mockTabsCreate).not.toHaveBeenCalled();
+    });
+  });
 });
+
 

@@ -218,6 +218,47 @@ let locksLoaded = false;
 browser.browserAction.setBadgeBackgroundColor({'color': 'green'});
 browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
 
+if (typeof browser !== "undefined" && browser.runtime && browser.runtime.onInstalled && browser.runtime.onInstalled.addListener) {
+  browser.runtime.onInstalled.addListener(async (details) => {
+    try {
+      const manifest = browser.runtime.getManifest ? browser.runtime.getManifest() : null;
+      const currentVersion = manifest ? manifest.version : null;
+
+      if (details && details.reason === "update") {
+        let hasSeenUpdatePage = false;
+        let lastSeenVersion = null;
+        if (browser.storage && browser.storage.local) {
+          const stored = await browser.storage.local.get(["hasSeenUpdatePage", "lastSeenVersion"]);
+          hasSeenUpdatePage = stored ? Boolean(stored.hasSeenUpdatePage) : false;
+          lastSeenVersion = stored ? stored.lastSeenVersion : null;
+        }
+
+        const alreadyShown = hasSeenUpdatePage || (lastSeenVersion && lastSeenVersion === currentVersion);
+
+        if (!alreadyShown && currentVersion) {
+          if (browser.storage && browser.storage.local) {
+            await browser.storage.local.set({ hasSeenUpdatePage: true, lastSeenVersion: currentVersion });
+          }
+          if (browser.tabs && browser.tabs.create) {
+            const url = (browser.runtime && browser.runtime.getURL)
+              ? browser.runtime.getURL("options/update.html")
+              : "options/update.html";
+            await browser.tabs.create({ url });
+          }
+        } else if (browser.storage && browser.storage.local && currentVersion && lastSeenVersion !== currentVersion) {
+          await browser.storage.local.set({ lastSeenVersion: currentVersion });
+        }
+      } else if (details && details.reason === "install") {
+        if (browser.storage && browser.storage.local && currentVersion) {
+          await browser.storage.local.set({ hasSeenUpdatePage: true, lastSeenVersion: currentVersion });
+        }
+      }
+    } catch (e) {
+      console.warn("TST-Lock: Failed in onInstalled handler:", e);
+    }
+  });
+}
+
 browser.runtime.onMessageExternal.addListener((message, sender) => {
   if (sender && sender.id && sender.id !== kTST_ID) {
     console.warn(`TST-Lock: Ignored external message from unauthorized sender: ${sender.id}`);
