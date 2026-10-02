@@ -31,7 +31,7 @@
     }
   },
   "devDependencies": {
-    "jest": "^30.5.0",
+    "jest": "^30.5.2",
     "web-ext": "^10.6.0"
   },
   "overrides": {
