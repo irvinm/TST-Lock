@@ -33,25 +33,29 @@
       </div>
     </header>
 
-    <!-- Light / Dark Tab Tester Section (Pinned Preview) -->
+    <!-- Dual Live Tab Preview Section (Pinned Preview) -->
     <section class="card preview-card">
       <div class="card-header-row">
         <h2 class="card-title">Live Tab Preview</h2>
-        <div class="theme-toggle-group" id="theme-toggle-group" role="group" aria-label="Tab Preview Theme">
-          <button type="button" class="theme-toggle-btn active" data-preview-theme="light" title="Test on light tab background">☀️ Light</button>
-          <button type="button" class="theme-toggle-btn" data-preview-theme="dark" title="Test on dark tab background">🌙 Dark</button>
+      </div>
+      <div class="mock-tab-dual-container">
+        <div class="mock-tab-box theme-light">
+          <span class="mock-tab-badge">☀️ Light Tab</span>
+          <div class="mock-tab">
+            <span class="mock-tab-favicon">🦊</span>
+            <span class="mock-tab-label">Sample Tab</span>
+            <span class="mock-tab-lock preview-lock" id="preview-lock-light">🔒</span>
+          </div>
+        </div>
+        <div class="mock-tab-box theme-dark">
+          <span class="mock-tab-badge">🌙 Dark Tab</span>
+          <div class="mock-tab">
+            <span class="mock-tab-favicon">🦊</span>
+            <span class="mock-tab-label">Sample Tab</span>
+            <span class="mock-tab-lock preview-lock" id="preview-lock-dark">🔒</span>
+          </div>
         </div>
       </div>
-      <div class="mock-tab-container" id="mock-tab-container">
-        <div class="mock-tab">
-          <span class="mock-tab-favicon">🦊</span>
-          <span class="mock-tab-label">Sample Locked Tab</span>
-          <span id="preview-lock" class="mock-tab-lock">🔒</span>
-        </div>
-      </div>
-      <p class="preview-hint">
-        Mock-up to test lock visibility against light and dark tab backgrounds.
-      </p>
     </section>
 
     <!-- Tab Navigation -->
@@ -66,7 +70,7 @@
         Bundled<br>Icons
       </button>
       <button type="button" class="tab-nav-btn" role="tab" id="tab-btn-settings" data-tab="settings" aria-selected="false" aria-controls="panel-settings" tabindex="-1">
-        Size &amp;<br>Mode
+        Shortcuts<br>&amp; Settings
       </button>
     </nav>
 
@@ -129,7 +133,7 @@
 
       <!-- Panel 2: Custom -->
       <section class="card tab-panel" id="panel-custom" role="tabpanel" aria-labelledby="tab-btn-custom" data-panel="custom" hidden>
-        <h2 class="card-title">Custom Emoji or Symbol</h2>
+        <h2 class="card-title">Custom Emoji / Symbol</h2>
         <p class="card-desc">
           Enter a <strong>single emoji or Unicode symbol</strong> to replace the tab close button.
         </p>
@@ -163,7 +167,7 @@
         <!-- Input and Action -->
         <div class="custom-input-group">
           <div class="input-wrapper">
-            <input type="text" id="custom-emoji-input" placeholder="Paste or type an emoji (e.g. ⭐️, ★)" autocomplete="off" spellcheck="false">
+            <input type="text" id="custom-emoji-input" placeholder="Paste emoji, or press Win + ." autocomplete="off" spellcheck="false">
             <span id="char-counter" class="char-counter">0 / 1</span>
           </div>
           <button type="button" id="apply-custom-btn" class="action-btn" disabled>Use Custom</button>
@@ -174,10 +178,19 @@
 
         <!-- Reference links -->
         <div class="help-links">
-          <span>Need ideas?</span>
-          <a href="https://emojipedia.org" target="_blank" rel="noopener noreferrer">Emojipedia ↗</a>
-          <span class="link-divider">•</span>
-          <a href="https://symbl.cc/en/" target="_blank" rel="noopener noreferrer">Unicode Symbols ↗</a>
+          <div class="help-links-row">
+            <span class="help-links-title">Inspiration:</span>
+            <a href="https://emojipedia.org" target="_blank" rel="noopener noreferrer">Emojipedia ↗</a>
+            <span class="link-divider">•</span>
+            <a href="https://getemoji.com/" target="_blank" rel="noopener noreferrer">Get Emoji ↗</a>
+            <span class="link-divider">•</span>
+            <a href="https://symbl.cc/en/" target="_blank" rel="noopener noreferrer">Symbl ↗</a>
+            <span class="link-divider">•</span>
+            <a href="https://copypastecharacter.com/" target="_blank" rel="noopener noreferrer">CopyPasteCharacter ↗</a>
+          </div>
+          <p class="help-note">
+            💡 <strong>Note:</strong> Uses standard Unicode text characters (no files needed). Font rendering depends on your OS—verify in the <strong>Live Tab Preview</strong> above.
+          </p>
         </div>
       </section>
 
@@ -205,7 +218,7 @@
         <div class="settings-stack">
           <!-- Size Control -->
           <div class="settings-subcard">
-            <div class="card-header-row">
+            <div class="card-header-row" style="margin-bottom: 4px;">
               <h2 class="card-title">Lock Size</h2>
               <span id="size-badge" class="size-badge">16px (Default)</span>
             </div>
@@ -222,14 +235,14 @@
                   <span class="tick-mark" style="left: 83.333%;" title="22px"></span>
                   <span class="tick-mark" style="left: 100%;" title="24px"></span>
                 </div>
+                <div class="size-ticks">
+                  <span class="tick-label-start">12px</span>
+                  <span class="tick-label-default">16px (Default)</span>
+                  <span class="tick-label-end">24px</span>
+                </div>
               </div>
               <button type="button" id="size-increase-btn" class="size-step-btn" title="Increase size" aria-label="Increase size">+</button>
               <button type="button" id="size-reset-btn" class="text-link-btn size-reset-btn" title="Reset to default size">Reset</button>
-            </div>
-            <div class="size-ticks">
-              <span class="tick-label-start">12px (Small)</span>
-              <span class="tick-label-default">16px (Default)</span>
-              <span class="tick-label-end">24px (Large)</span>
             </div>
           </div>
 
@@ -237,15 +250,63 @@
           <div class="settings-subcard">
             <div class="card-header-row">
               <h2 class="card-title">Lock Visibility</h2>
+              <div class="visibility-toggle-group" id="visibility-toggle-group" role="radiogroup" aria-label="Lock Visibility Mode">
+                <button type="button" class="visibility-btn active" data-visibility="always" role="radio" aria-checked="true">
+                  Always
+                </button>
+                <button type="button" class="visibility-btn" data-visibility="hover" role="radio" aria-checked="false">
+                  On Hover
+                </button>
+              </div>
             </div>
-            <div class="visibility-toggle-group" id="visibility-toggle-group" role="radiogroup" aria-label="Lock Visibility Mode">
-              <button type="button" class="visibility-btn active" data-visibility="always" role="radio" aria-checked="true">
-                Always Display
-              </button>
-              <button type="button" class="visibility-btn" data-visibility="hover" role="radio" aria-checked="false">
-                Only When Hovering
-              </button>
+            <div class="settings-hint-small">Show lock icon permanently or only when hovering over tabs</div>
+          </div>
+
+          <!-- TST Mouse Shortcut (Modifier Builder) -->
+          <div class="settings-subcard">
+            <div class="card-header-row">
+              <h2 class="card-title">TST Mouse Shortcut</h2>
+              <div class="status-toggle-group" id="mouse-shortcut-toggle-group" role="radiogroup" aria-label="TST Mouse Shortcut Status">
+                <button type="button" class="status-btn active" id="shortcut-status-on-btn" data-status="on" role="radio" aria-checked="true">
+                  On
+                </button>
+                <button type="button" class="status-btn" id="shortcut-status-off-btn" data-status="off" role="radio" aria-checked="false">
+                  Off
+                </button>
+              </div>
             </div>
+            <div class="modifier-builder-row" id="modifier-builder-row" role="group" aria-label="TST Tab Click Modifiers">
+              <label class="modifier-chip-label" title="Require Ctrl / Cmd key">
+                <input type="checkbox" id="mod-ctrl" class="modifier-input">
+                <span class="modifier-chip" id="mod-ctrl-chip">Ctrl</span>
+              </label>
+              <label class="modifier-chip-label" title="Require Shift key">
+                <input type="checkbox" id="mod-shift" class="modifier-input">
+                <span class="modifier-chip" id="mod-shift-chip">Shift</span>
+              </label>
+              <label class="modifier-chip-label" title="Require Alt / Option key">
+                <input type="checkbox" id="mod-alt" class="modifier-input">
+                <span class="modifier-chip" id="mod-alt-chip">Alt</span>
+              </label>
+              <span class="click-target-label" id="click-target-label" title="Left-Click on tab in sidebar" aria-label="Left-Click">
+                <span class="click-plus">+</span>
+                <svg class="click-action-icon" width="15" height="21" viewBox="0 0 16 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="1" y="1" width="14" height="20" rx="7"/>
+                  <line x1="8" y1="1" x2="8" y2="9"/>
+                  <line x1="1" y1="9" x2="15" y2="9"/>
+                  <path d="M1 8C1 4.134 4.134 1 8 1v8H1z" fill="var(--accent-color)" stroke="var(--accent-color)" stroke-width="0.5"/>
+                </svg>
+              </span>
+            </div>
+          </div>
+
+          <!-- Firefox Keyboard Shortcut Info -->
+          <div class="settings-subcard">
+            <div class="card-header-row">
+              <h2 class="card-title">Firefox Keyboard Shortcut</h2>
+              <kbd class="shortcut-badge" id="active-tab-shortcut-badge" title="Manage in Firefox Extension Shortcuts">Ctrl + Alt + L</kbd>
+            </div>
+            <div class="shortcut-hint-small"><code>about:addons</code> ➔ ⚙️ ➔ Manage Extension Shortcuts</div>
           </div>
         </div>
       </section>

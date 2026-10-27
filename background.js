@@ -5,6 +5,11 @@ let shutdownWatchPromise = null;
 
 let isRegistering = false;
 
+const extensionVersion = (typeof browser !== "undefined" && browser.runtime && typeof browser.runtime.getManifest === "function" && browser.runtime.getManifest())
+  ? (browser.runtime.getManifest().version || "unknown")
+  : "unknown";
+console.log(`TST-Lock: Background script loaded (version: ${extensionVersion})`);
+
 const DEFAULT_ICON_CONFIG = {
   type: "emoji",
   value: "🔒",
@@ -128,7 +133,8 @@ function loadIconConfig() {
                                stored.iconConfig.visibility !== currentIconConfig.visibility;
             currentIconConfig = stored.iconConfig;
             if (hasChanged) {
-              registerSelfToTST();
+              console.log("TST-Lock: Loaded new icon config from storage, re-registering with TST");
+              registerSelfToTST("icon-config-loaded");
             }
           }
         })
@@ -140,23 +146,105 @@ function loadIconConfig() {
 }
 loadIconConfig();
 
+const DEFAULT_MOUSE_SHORTCUT = {
+  ctrl: true,
+  shift: true,
+  alt: false,
+  disabled: false
+};
+let currentMouseShortcut = { ...DEFAULT_MOUSE_SHORTCUT };
+
+function normalizeMouseShortcut(stored) {
+  if (typeof stored === "string") {
+    switch (stored) {
+      case "alt":
+        return { ctrl: false, shift: false, alt: true, disabled: false };
+      case "altShift":
+        return { ctrl: false, shift: true, alt: true, disabled: false };
+      case "ctrlAlt":
+        return { ctrl: true, shift: false, alt: true, disabled: false };
+      case "disabled":
+        return { ctrl: false, shift: false, alt: false, disabled: true };
+      case "ctrlShift":
+      default:
+        return { ctrl: true, shift: true, alt: false, disabled: false };
+    }
+  }
+  if (stored && typeof stored === "object") {
+    return {
+      ctrl: Boolean(stored.ctrl),
+      shift: Boolean(stored.shift),
+      alt: Boolean(stored.alt),
+      disabled: Boolean(stored.disabled)
+    };
+  }
+  return { ...DEFAULT_MOUSE_SHORTCUT };
+}
+
+function isMouseShortcutMatch(message, shortcutSetting = currentMouseShortcut) {
+  if (!message || message.button !== 0) {
+    return false;
+  }
+  const config = normalizeMouseShortcut(shortcutSetting);
+  if (config.disabled) {
+    return false;
+  }
+  if (!config.ctrl && !config.shift && !config.alt) {
+    return false;
+  }
+
+  const isCtrlOrMeta = Boolean(message.ctrlKey || message.metaKey);
+  const isShift = Boolean(message.shiftKey);
+  const isAlt = Boolean(message.altKey);
+
+  return (
+    isCtrlOrMeta === config.ctrl &&
+    isShift === config.shift &&
+    isAlt === config.alt
+  );
+}
+
+function loadMouseShortcutConfig() {
+  if (typeof browser !== "undefined" && browser.storage) {
+    const storageArea = browser.storage.sync || browser.storage.local;
+    if (storageArea && typeof storageArea.get === "function") {
+      storageArea.get({ mouseShortcut: DEFAULT_MOUSE_SHORTCUT })
+        .then((stored) => {
+          if (stored && stored.mouseShortcut) {
+            currentMouseShortcut = normalizeMouseShortcut(stored.mouseShortcut);
+            console.log("TST-Lock: Loaded mouse shortcut configuration:", currentMouseShortcut);
+          }
+        })
+        .catch((err) => {
+          console.warn("TST-Lock: Error loading mouse shortcut config: " + err);
+        });
+    }
+  }
+}
+loadMouseShortcutConfig();
+
 if (typeof browser !== "undefined" && browser.storage && browser.storage.onChanged) {
   browser.storage.onChanged.addListener((changes) => {
     if (changes && changes.iconConfig) {
       currentIconConfig = changes.iconConfig.newValue || DEFAULT_ICON_CONFIG;
-      console.log("TST-Lock: Icon configuration changed, updating TST styles");
-      registerSelfToTST();
+      console.log("TST-Lock: Icon configuration changed in storage, updating TST styles");
+      registerSelfToTST("icon-config-changed");
+    }
+    if (changes && changes.mouseShortcut) {
+      currentMouseShortcut = normalizeMouseShortcut(changes.mouseShortcut.newValue);
+      console.log("TST-Lock: Mouse shortcut configuration changed in storage:", currentMouseShortcut);
     }
   });
 }
 
-async function registerSelfToTST() {
+async function registerSelfToTST(reason = "startup") {
   if (isRegistering) {
+    console.log(`TST-Lock: Registration already in progress, skipping duplicate request (trigger: ${reason})`);
     return;
   }
   isRegistering = true;
   try {
-    console.log("TST-Lock: Sending register-self message to TST");
+    console.log(`TST-Lock: Sending register-self message to TST (trigger: ${reason})`);
     const result = await browser.runtime.sendMessage(kTST_ID, {
       type: "register-self",
       name: "TST-Lock",
@@ -166,11 +254,11 @@ async function registerSelfToTST() {
     });
 
     if (!result) {
-      console.log("TST-Lock: TST is starting up (not initialized yet). Waiting for 'ready' event.");
+      console.log(`TST-Lock: TST is starting up (not initialized yet). Waiting for 'ready' event. (trigger: ${reason})`);
       return;
     }
 
-    console.log("TST-Lock: Successfully registered with TST");
+    console.log(`TST-Lock: Successfully registered with TST (trigger: ${reason})`);
 
     // Load stored locks immediately upon successful registration
     loadStoredLockStates().catch((error) => {
@@ -180,17 +268,17 @@ async function registerSelfToTST() {
     // Establish shutdown monitoring
     monitorTSTShutdown();
 
-  } catch (_error) {
-    console.log("TST-Lock: TST is not available yet. Waiting for TST 'ready' event.");
+  } catch (error) {
+    console.log(`TST-Lock: TST is not available yet (${error && error.message ? error.message : error}). Waiting for TST 'ready' event. (trigger: ${reason})`);
   } finally {
     isRegistering = false;
   }
 }
-registerSelfToTST();
+registerSelfToTST("startup");
 
-async function uninitFeaturesForTST() {
+async function uninitFeaturesForTST(reason = "unknown") {
   // Put codes to deactivate special features for TST here.
-  console.log("TST-Lock: Inside uninitFeaturesForTST()");
+  console.log(`TST-Lock: Inside uninitFeaturesForTST() (reason: ${reason})`);
   locksLoaded = false;
 }
 
@@ -202,11 +290,11 @@ function monitorTSTShutdown() {
   shutdownWatchPromise = browser.runtime.sendMessage(kTST_ID, { type: "wait-for-shutdown" })
     .then((result) => {
       console.log("TST-Lock: wait-for-shutdown resolved with:", result);
-      uninitFeaturesForTST();
+      uninitFeaturesForTST("tst-shutdown-detected");
     })
     .catch((error) => {
       console.log("TST-Lock: wait-for-shutdown promise rejected/disconnected: " + error);
-      uninitFeaturesForTST();
+      uninitFeaturesForTST("tst-connection-lost");
     })
     .finally(() => {
       shutdownWatchPromise = null;
@@ -221,6 +309,7 @@ browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
 if (typeof browser !== "undefined" && browser.runtime && browser.runtime.onInstalled && browser.runtime.onInstalled.addListener) {
   browser.runtime.onInstalled.addListener(async (details) => {
     try {
+      console.log(`TST-Lock: onInstalled event received (reason: ${details && details.reason}, previousVersion: ${details && details.previousVersion})`);
       const manifest = browser.runtime.getManifest ? browser.runtime.getManifest() : null;
       const currentVersion = manifest ? manifest.version : null;
 
@@ -259,6 +348,153 @@ if (typeof browser !== "undefined" && browser.runtime && browser.runtime.onInsta
   });
 }
 
+async function toggleTabsLock(tabIds, forceState = null) {
+  const validIds = (Array.isArray(tabIds) ? tabIds : [tabIds]).filter(id => typeof id !== "undefined" && id !== null);
+  if (validIds.length === 0) {
+    console.warn("TST-Lock: toggleTabsLock called without a valid tab target");
+    return false;
+  }
+
+  // If any tab is currently unlocked, lock all; otherwise unlock all
+  const anyUnlocked = validIds.some(id => !lockedTabs.has(id));
+  const nextLocked = (typeof forceState === "boolean") ? forceState : anyUnlocked;
+
+  for (const tabId of validIds) {
+    browser.runtime.sendMessage(kTST_ID, {
+      type: nextLocked ? "add-tab-state" : "remove-tab-state",
+      tab: tabId,
+      state: "locked",
+    }).catch((err) => {
+      console.warn(`TST-Lock: Failed to update tab state in TST for tab ${tabId}:`, err);
+    });
+
+    if (nextLocked) {
+      console.log(`TST-Lock: Locking tab ${tabId}: Size before = ${lockedTabs.size}`);
+      lockedTabs.add(tabId);
+      try {
+        await browser.sessions.setTabValue(tabId, "locked", true);
+      } catch (err) {
+        console.warn(`TST-Lock: Failed to persist lock session state for tab ${tabId}:`, err);
+      }
+    } else {
+      console.log(`TST-Lock: Unlocking tab ${tabId}: Size before = ${lockedTabs.size}`);
+      lockedTabs.delete(tabId);
+      try {
+        await browser.sessions.removeTabValue(tabId, "locked");
+      } catch (err) {
+        console.warn(`TST-Lock: Failed to remove lock session state for tab ${tabId}:`, err);
+      }
+    }
+  }
+
+  browser.browserAction.setBadgeText({ text: lockedTabs.size.toString() });
+  return nextLocked;
+}
+
+async function toggleTabLock(tabId) {
+  return toggleTabsLock([tabId]);
+}
+
+const CONTEXT_MENU_ID = "tst-lock-toggle";
+
+function initContextMenu() {
+  if (typeof browser !== "undefined" && browser.menus && browser.menus.create) {
+    browser.menus.create({
+      id: CONTEXT_MENU_ID,
+      title: "Lock Tab",
+      contexts: ["tab"],
+      icons: { "16": "images/lock.png" }
+    }, () => {
+      if (browser.runtime && browser.runtime.lastError) {
+        // Ignore duplicate menu item creation if already created
+      }
+    });
+  }
+}
+initContextMenu();
+
+if (typeof browser !== "undefined" && browser.menus) {
+  if (browser.menus.onShown && browser.menus.onShown.addListener) {
+    browser.menus.onShown.addListener(async (info, tab) => {
+      if (info && info.contexts && info.contexts.includes("tab") && tab && typeof tab.id !== "undefined") {
+        try {
+          let menuTitle = "Lock Tab";
+          let isBatch = false;
+
+          if (browser.tabs && browser.tabs.query) {
+            const highlighted = await browser.tabs.query({ highlighted: true, currentWindow: true });
+            const highlightedIds = (highlighted || []).map((t) => t.id).filter((id) => typeof id !== "undefined");
+            if (highlightedIds.length > 1 && highlightedIds.includes(tab.id)) {
+              isBatch = true;
+              const anyUnlocked = highlightedIds.some((id) => !lockedTabs.has(id));
+              menuTitle = anyUnlocked ? `Lock ${highlightedIds.length} Tabs` : `Unlock ${highlightedIds.length} Tabs`;
+            }
+          }
+
+          if (!isBatch) {
+            const isLocked = lockedTabs.has(tab.id);
+            menuTitle = isLocked ? "Unlock Tab" : "Lock Tab";
+          }
+
+          await browser.menus.update(CONTEXT_MENU_ID, {
+            title: menuTitle
+          });
+          if (typeof browser.menus.refresh === "function") {
+            browser.menus.refresh();
+          }
+        } catch (err) {
+          console.warn("TST-Lock: Failed to update context menu item:", err);
+        }
+      }
+    });
+  }
+
+  if (browser.menus.onClicked && browser.menus.onClicked.addListener) {
+    browser.menus.onClicked.addListener(async (info, tab) => {
+      if (info && info.menuItemId === CONTEXT_MENU_ID && tab && typeof tab.id !== "undefined") {
+        console.log(`TST-Lock: Context menu 'Lock/Unlock Tab' clicked for tab ${tab.id}`);
+        try {
+          if (browser.tabs && browser.tabs.query) {
+            const highlighted = await browser.tabs.query({ highlighted: true, currentWindow: true });
+            const highlightedIds = (highlighted || []).map((t) => t.id).filter((id) => typeof id !== "undefined");
+            if (highlightedIds.length > 1 && highlightedIds.includes(tab.id)) {
+              console.log(`TST-Lock: Batch toggling ${highlightedIds.length} highlighted tabs via context menu`);
+              await toggleTabsLock(highlightedIds);
+              return;
+            }
+          }
+        } catch (_err) {
+          // Fall through to single tab toggle
+        }
+        await toggleTabLock(tab.id);
+      }
+    });
+  }
+}
+
+if (typeof browser !== "undefined" && browser.commands && browser.commands.onCommand && browser.commands.onCommand.addListener) {
+  browser.commands.onCommand.addListener(async (command) => {
+    console.log(`TST-Lock: Keyboard shortcut command triggered: ${command}`);
+    if (command === "toggle-tab-lock") {
+      try {
+        let targetTabs = [];
+        if (browser.tabs && browser.tabs.query) {
+          targetTabs = await browser.tabs.query({ highlighted: true, currentWindow: true });
+          if (!targetTabs || targetTabs.length === 0) {
+            targetTabs = await browser.tabs.query({ active: true, currentWindow: true });
+          }
+        }
+        const tabIds = (targetTabs || []).map((t) => t.id).filter((id) => typeof id !== "undefined");
+        if (tabIds.length > 0) {
+          await toggleTabsLock(tabIds);
+        }
+      } catch (err) {
+        console.warn("TST-Lock: Failed to toggle tab lock via keyboard command:", err);
+      }
+    }
+  });
+}
+
 browser.runtime.onMessageExternal.addListener((message, sender) => {
   if (sender && sender.id && sender.id !== kTST_ID) {
     console.warn(`TST-Lock: Ignored external message from unauthorized sender: ${sender.id}`);
@@ -269,36 +505,29 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
 
   switch (message.type) {
     case "tab-mousedown":
-      if (message.button == 0 && message.ctrlKey && message.shiftKey) {
+      if (isMouseShortcutMatch(message, currentMouseShortcut)) {
         if (!message.tab || typeof message.tab.id === "undefined") {
           console.warn("TST-Lock: Received tab-mousedown without a valid tab target:", message);
           return;
         }
 
-        browser.runtime.sendMessage(kTST_ID, {
-          type: locked ? "remove-tab-state" : "add-tab-state",
-          tab: message.tab.id,
-          state: "locked",
-        }).catch((err) => {
-          console.warn(`TST-Lock: Failed to update tab state in TST for tab ${message.tab.id}:`, err);
-        });
-
-        if (locked) {
-          console.log(`TST-Lock: Unlocking tab ${message.tab.id}: Size before = ${lockedTabs.size}`);
-          lockedTabs.delete(message.tab.id);
-          browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
-          browser.sessions.removeTabValue(message.tab.id, "locked").catch((err) => {
-            console.warn(`TST-Lock: Failed to remove lock session state for tab ${message.tab.id}:`, err);
-          });
-        } else {
-          console.log(`TST-Lock: Locking tab ${message.tab.id}: Size before = ${lockedTabs.size}`);
-          lockedTabs.add(message.tab.id);
-          browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
-          browser.sessions.setTabValue(message.tab.id, "locked", true).catch((err) => {
-            console.warn(`TST-Lock: Failed to persist lock session state for tab ${message.tab.id}:`, err);
-          });
-        }
-        return Promise.resolve(true);
+        return (async () => {
+          try {
+            if (browser.tabs && browser.tabs.query) {
+              const highlighted = await browser.tabs.query({ highlighted: true, currentWindow: true });
+              const highlightedIds = (highlighted || []).map((t) => t.id).filter((id) => typeof id !== "undefined");
+              if (highlightedIds.length > 1 && highlightedIds.includes(message.tab.id)) {
+                console.log(`TST-Lock: Batch toggling ${highlightedIds.length} highlighted tabs via mouse shortcut`);
+                await toggleTabsLock(highlightedIds);
+                return true;
+              }
+            }
+          } catch (_err) {
+            // Fall through to single tab toggle
+          }
+          await toggleTabLock(message.tab.id);
+          return true;
+        })();
       }
       break;
 
@@ -310,9 +539,9 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
       break;
 
     case "ready":
-      console.log("TST-Lock: Received 'ready' event from TST");
+      console.log("TST-Lock: Received 'ready' event from TST. Triggering re-registration...");
       locksLoaded = false; 
-      registerSelfToTST();
+      registerSelfToTST("tst-ready-event");
       break;
 
     case "wait-for-shutdown":
@@ -323,15 +552,93 @@ browser.runtime.onMessageExternal.addListener((message, sender) => {
 });
 
 // Clean up memory when a tab is closed
-browser.tabs.onRemoved.addListener(async (tabId, removeInfo = {}) => {
-  if (removeInfo.isWindowClosing) return;
-  if (lockedTabs.has(tabId)) {
-    console.log(`TST-Lock: Closed locked tab ${tabId}: Size before = ${lockedTabs.size}`);
-    lockedTabs.delete(tabId);
-    // Update badge when a locked tab is closed
-    browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
+if (typeof browser !== "undefined" && browser.tabs && browser.tabs.onRemoved && browser.tabs.onRemoved.addListener) {
+  browser.tabs.onRemoved.addListener(async (tabId, removeInfo = {}) => {
+    if (removeInfo && removeInfo.isWindowClosing) return;
+    if (lockedTabs.has(tabId)) {
+      console.log(`TST-Lock: Closed locked tab ${tabId}: Size before = ${lockedTabs.size}`);
+      lockedTabs.delete(tabId);
+      // Update badge when a locked tab is closed
+      if (browser.browserAction && browser.browserAction.setBadgeText) {
+        browser.browserAction.setBadgeText({text: lockedTabs.size.toString()});
+      }
+    }
+  });
+}
+
+// Re-apply lock state when a tab is dragged/moved across windows
+async function handleTabAttached(tabId, attachInfo = {}) {
+  if (typeof tabId === "undefined" || tabId === null) return;
+  try {
+    const isLocked = lockedTabs.has(tabId) ||
+      (typeof browser !== "undefined" && browser.sessions && browser.sessions.getTabValue && await browser.sessions.getTabValue(tabId, "locked").catch(() => false));
+    if (isLocked) {
+      lockedTabs.add(tabId);
+      const winId = attachInfo && typeof attachInfo.newWindowId !== "undefined" ? attachInfo.newWindowId : "unknown";
+      console.log(`TST-Lock: Tab ${tabId} attached to window ${winId}. Re-applying lock state to TST`);
+
+      const reapply = () => {
+        if (lockedTabs.has(tabId) && typeof browser !== "undefined" && browser.runtime && browser.runtime.sendMessage) {
+          browser.runtime.sendMessage(kTST_ID, {
+            type: "add-tab-state",
+            tab: tabId,
+            state: "locked",
+          }).catch((err) => {
+            console.warn(`TST-Lock: Failed to reapply tab state to TST for tab ${tabId}:`, err);
+          });
+        }
+      };
+
+      // Immediate attempt
+      reapply();
+
+      // Delayed retries to ensure destination window sidebar DOM has mounted the tab item
+      setTimeout(reapply, 250);
+      setTimeout(reapply, 600);
+    }
+  } catch (err) {
+    console.warn(`TST-Lock: Error handling tab onAttached for tab ${tabId}:`, err);
   }
-});
+}
+
+if (typeof browser !== "undefined" && browser.tabs && browser.tabs.onAttached && browser.tabs.onAttached.addListener) {
+  browser.tabs.onAttached.addListener(handleTabAttached);
+}
+
+// Also detect restored or duplicated tabs that carry forward locked session state
+async function handleTabCreated(tab) {
+  if (!tab || typeof tab.id === "undefined") return;
+  try {
+    if (typeof browser !== "undefined" && browser.sessions && browser.sessions.getTabValue) {
+      const locked = await browser.sessions.getTabValue(tab.id, "locked").catch(() => false);
+      if (locked) {
+        lockedTabs.add(tab.id);
+        if (browser.browserAction && browser.browserAction.setBadgeText) {
+          browser.browserAction.setBadgeText({ text: lockedTabs.size.toString() });
+        }
+        console.log(`TST-Lock: Tab ${tab.id} created with locked session state. Applying lock state to TST`);
+        const reapply = () => {
+          if (lockedTabs.has(tab.id) && browser.runtime && browser.runtime.sendMessage) {
+            browser.runtime.sendMessage(kTST_ID, {
+              type: "add-tab-state",
+              tab: tab.id,
+              state: "locked",
+            }).catch(() => {});
+          }
+        };
+        reapply();
+        setTimeout(reapply, 250);
+        setTimeout(reapply, 600);
+      }
+    }
+  } catch (err) {
+    console.warn(`TST-Lock: Error handling tab onCreated for tab ${tab.id}:`, err);
+  }
+}
+
+if (typeof browser !== "undefined" && browser.tabs && browser.tabs.onCreated && browser.tabs.onCreated.addListener) {
+  browser.tabs.onCreated.addListener(handleTabCreated);
+}
 
 let isLoadingLocks = false;
 
@@ -387,6 +694,18 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     buildTSTStyle,
     sanitizeEmoji,
-    DEFAULT_ICON_CONFIG
+    DEFAULT_ICON_CONFIG,
+    DEFAULT_MOUSE_SHORTCUT,
+    normalizeMouseShortcut,
+    isMouseShortcutMatch,
+    get currentMouseShortcut() { return currentMouseShortcut; },
+    set currentMouseShortcut(val) { currentMouseShortcut = val; },
+    toggleTabsLock,
+    toggleTabLock,
+    handleTabAttached,
+    handleTabCreated,
+    initContextMenu,
+    CONTEXT_MENU_ID,
+    lockedTabs
   };
 }

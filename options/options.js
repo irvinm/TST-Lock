@@ -11,31 +11,129 @@ const MAX_RECENT_EMOJIS = 10;
 
 const storageArea = (typeof browser !== "undefined" && browser.storage && (browser.storage.sync || browser.storage.local)) || null;
 
-const previewLock = document.getElementById("preview-lock");
-const mockTabContainer = document.getElementById("mock-tab-container");
-const themeToggleGroup = document.getElementById("theme-toggle-group");
-const sizeSlider = document.getElementById("size-slider");
-const sizeBadge = document.getElementById("size-badge");
-const sizeDecreaseBtn = document.getElementById("size-decrease-btn");
-const sizeIncreaseBtn = document.getElementById("size-increase-btn");
-const sizeResetBtn = document.getElementById("size-reset-btn");
-const visibilityToggleGroup = document.getElementById("visibility-toggle-group");
-const presetEmojiGrid = document.getElementById("preset-emojis");
-const presetBundledGrid = document.getElementById("preset-bundled");
-const recentWrapper = document.getElementById("recent-wrapper");
-const recentChips = document.getElementById("recent-chips");
-const clearRecentBtn = document.getElementById("clear-recent-btn");
-const quickChips = document.getElementById("quick-chips");
-const customInput = document.getElementById("custom-emoji-input");
-const applyCustomBtn = document.getElementById("apply-custom-btn");
-const charCounter = document.getElementById("char-counter");
-const customFeedback = document.getElementById("custom-feedback");
-const resetBtn = document.getElementById("reset-default-btn");
-const statusMsg = document.getElementById("status-msg");
-const openTabBtn = document.getElementById("open-tab-btn");
-const tabNav = document.getElementById("tab-nav");
-const pageThemeBtn = document.getElementById("page-theme-btn");
-const pageThemeIcon = document.getElementById("page-theme-icon");
+const doc = (typeof document !== "undefined") ? document : null;
+
+function getPreviewLocks() {
+  return doc ? doc.querySelectorAll(".preview-lock, #preview-lock") : [];
+}
+const sizeSlider = doc ? doc.getElementById("size-slider") : null;
+const sizeBadge = doc ? doc.getElementById("size-badge") : null;
+const sizeDecreaseBtn = doc ? doc.getElementById("size-decrease-btn") : null;
+const sizeIncreaseBtn = doc ? doc.getElementById("size-increase-btn") : null;
+const sizeResetBtn = doc ? doc.getElementById("size-reset-btn") : null;
+const visibilityToggleGroup = doc ? doc.getElementById("visibility-toggle-group") : null;
+const presetEmojiGrid = doc ? doc.getElementById("preset-emojis") : null;
+const presetBundledGrid = doc ? doc.getElementById("preset-bundled") : null;
+const recentWrapper = doc ? doc.getElementById("recent-wrapper") : null;
+const recentChips = doc ? doc.getElementById("recent-chips") : null;
+const clearRecentBtn = doc ? doc.getElementById("clear-recent-btn") : null;
+const quickChips = doc ? doc.getElementById("quick-chips") : null;
+const customInput = doc ? doc.getElementById("custom-emoji-input") : null;
+const applyCustomBtn = doc ? doc.getElementById("apply-custom-btn") : null;
+const charCounter = doc ? doc.getElementById("char-counter") : null;
+const customFeedback = doc ? doc.getElementById("custom-feedback") : null;
+const resetBtn = doc ? doc.getElementById("reset-default-btn") : null;
+const statusMsg = doc ? doc.getElementById("status-msg") : null;
+const openTabBtn = doc ? doc.getElementById("open-tab-btn") : null;
+const tabNav = doc ? doc.getElementById("tab-nav") : null;
+const pageThemeBtn = doc ? doc.getElementById("page-theme-btn") : null;
+const pageThemeIcon = doc ? doc.getElementById("page-theme-icon") : null;
+
+const modCtrl = doc ? doc.getElementById("mod-ctrl") : null;
+const modShift = doc ? doc.getElementById("mod-shift") : null;
+const modAlt = doc ? doc.getElementById("mod-alt") : null;
+const mouseShortcutToggleGroup = doc ? doc.getElementById("mouse-shortcut-toggle-group") : null;
+const shortcutStatusOnBtn = doc ? doc.getElementById("shortcut-status-on-btn") : null;
+const shortcutStatusOffBtn = doc ? doc.getElementById("shortcut-status-off-btn") : null;
+const modCtrlChip = doc ? doc.getElementById("mod-ctrl-chip") : null;
+const modShiftChip = doc ? doc.getElementById("mod-shift-chip") : null;
+const modAltChip = doc ? doc.getElementById("mod-alt-chip") : null;
+const activeTabShortcutBadge = doc ? doc.getElementById("active-tab-shortcut-badge") : null;
+
+const DEFAULT_MOUSE_SHORTCUT = {
+  ctrl: true,
+  shift: true,
+  alt: false,
+  disabled: false
+};
+
+const isMac = (typeof navigator !== "undefined") && (
+  /Mac|iPod|iPhone|iPad/.test(navigator.platform || "") ||
+  /Macintosh/.test(navigator.userAgent || "")
+);
+
+function formatShortcutForDisplay(rawShortcut, onMac = isMac) {
+  if (!rawShortcut) {
+    return onMac ? "⌥ + ⌘ + L" : "Ctrl + Alt + L";
+  }
+
+  const parts = rawShortcut.split("+").map((s) => s.trim()).filter(Boolean);
+  if (parts.length === 0) {
+    return onMac ? "⌥ + ⌘ + L" : "Ctrl + Alt + L";
+  }
+
+  if (onMac) {
+    let hasCtrl = false;
+    let hasAlt = false;
+    let hasShift = false;
+    let hasCmd = false;
+    let key = "";
+
+    parts.forEach((p) => {
+      const lower = p.toLowerCase();
+      if (lower === "macctrl" || lower === "control") {
+        hasCtrl = true;
+      } else if (lower === "ctrl" || lower === "command" || lower === "cmd" || p === "⌘") {
+        // In Firefox commands on macOS, 'Ctrl' maps to Command (⌘)
+        hasCmd = true;
+      } else if (lower === "alt" || lower === "option" || p === "⌥") {
+        hasAlt = true;
+      } else if (lower === "shift" || p === "⇧") {
+        hasShift = true;
+      } else {
+        key = p.toUpperCase();
+      }
+    });
+
+    // Standard macOS modifier order: Control (⌃), Option (⌥), Shift (⇧), Command (⌘), Key
+    const macSymbols = [];
+    if (hasCtrl) macSymbols.push("⌃");
+    if (hasAlt) macSymbols.push("⌥");
+    if (hasShift) macSymbols.push("⇧");
+    if (hasCmd) macSymbols.push("⌘");
+    if (key) macSymbols.push(key);
+
+    return macSymbols.length > 0 ? macSymbols.join(" + ") : rawShortcut;
+  }
+
+  return parts.map((p) => {
+    const lower = p.toLowerCase();
+    if (lower === "ctrl" || lower === "control") return "Ctrl";
+    if (lower === "alt") return "Alt";
+    if (lower === "shift") return "Shift";
+    return p.toUpperCase();
+  }).join(" + ");
+}
+
+function applyPlatformLabels() {
+  const badge = activeTabShortcutBadge || (doc ? doc.getElementById("active-tab-shortcut-badge") : null);
+  if (isMac) {
+    if (modCtrlChip) modCtrlChip.textContent = "Cmd (⌘)";
+    if (modAltChip) modAltChip.textContent = "Option (⌥)";
+    if (customInput) customInput.placeholder = "Paste emoji, or press Cmd + Ctrl + Space";
+    if (badge) {
+      badge.textContent = "⌥ + ⌘ + L";
+      badge.title = "Option + Command + L (Manage in Firefox Extension Shortcuts)";
+    }
+  } else {
+    if (customInput) customInput.placeholder = "Paste emoji, or press Win + .";
+    if (badge) {
+      badge.textContent = "Ctrl + Alt + L";
+      badge.title = "Manage in Firefox Extension Shortcuts";
+    }
+  }
+}
+
 let tabNavBtns = [];
 let tabPanels = [];
 
@@ -240,10 +338,10 @@ function updateVisibilityUI(visibility) {
     btn.setAttribute("aria-checked", isTarget ? "true" : "false");
   });
 
-  const mockTab = document.querySelector(".mock-tab");
-  if (mockTab) {
+  const mockTabs = document.querySelectorAll(".mock-tab");
+  mockTabs.forEach((mockTab) => {
     mockTab.classList.toggle("visibility-hover", vis === "hover");
-  }
+  });
 }
 
 function handleVisibilityChange(newVisibility) {
@@ -288,29 +386,32 @@ function addRecentCustomEmoji(sym) {
 }
 
 function updatePreview(config) {
-  if (!previewLock) return;
-  previewLock.replaceChildren();
+  const locks = getPreviewLocks();
+  if (!locks || locks.length === 0) return;
 
   const size = (config && typeof config.size === "number") ? config.size : 16;
   const imageSize = Math.max(10, Math.round(size * 0.94));
   const translateY = -Math.round((size * 0.09) * 10) / 10;
 
-  previewLock.style.fontSize = `${size}px`;
-  previewLock.style.width = "24px";
-  previewLock.style.height = "24px";
+  locks.forEach((lock) => {
+    lock.replaceChildren();
+    lock.style.fontSize = `${size}px`;
+    lock.style.width = "24px";
+    lock.style.height = "24px";
 
-  if (config.type === "bundled") {
-    previewLock.style.transform = "translateY(-0.5px)";
-    const img = document.createElement("img");
-    img.src = "../" + config.value;
-    img.alt = "Lock icon";
-    img.style.width = `${imageSize}px`;
-    img.style.height = `${imageSize}px`;
-    previewLock.appendChild(img);
-  } else {
-    previewLock.style.transform = `translateY(${translateY}px)`;
-    previewLock.textContent = config.value || "🔒";
-  }
+    if (config.type === "bundled") {
+      lock.style.transform = "translateY(-0.5px)";
+      const img = document.createElement("img");
+      img.src = "../" + config.value;
+      img.alt = "Lock icon";
+      img.style.width = `${imageSize}px`;
+      img.style.height = `${imageSize}px`;
+      lock.appendChild(img);
+    } else {
+      lock.style.transform = `translateY(${translateY}px)`;
+      lock.textContent = config.value || "🔒";
+    }
+  });
 }
 
 function updateActiveButton(config) {
@@ -357,6 +458,113 @@ async function saveConfig(partialOrFull) {
   }
 }
 
+async function loadKeyboardShortcut() {
+  const badge = activeTabShortcutBadge || (doc ? doc.getElementById("active-tab-shortcut-badge") : null);
+  if (!badge) return;
+
+  const defaultText = isMac ? "⌥ + ⌘ + L" : "Ctrl + Alt + L";
+  const defaultTitle = isMac
+    ? "Option + Command + L (Manage in Firefox Extension Shortcuts)"
+    : "Manage in Firefox Extension Shortcuts";
+
+  badge.textContent = defaultText;
+  badge.title = defaultTitle;
+
+  if (typeof browser !== "undefined" && browser.commands && browser.commands.getAll) {
+    try {
+      const commands = await browser.commands.getAll();
+      const toggleCmd = (commands || []).find((c) => c.name === "toggle-tab-lock");
+      if (toggleCmd) {
+        if (toggleCmd.shortcut) {
+          badge.textContent = formatShortcutForDisplay(toggleCmd.shortcut, isMac);
+          badge.title = isMac
+            ? "Option + Command + L (Manage in Firefox Extension Shortcuts)"
+            : "Manage in Firefox Extension Shortcuts";
+        } else {
+          badge.textContent = "None assigned";
+          badge.title = "Manage in Firefox Extension Shortcuts";
+        }
+      }
+    } catch (_err) {
+      badge.textContent = defaultText;
+      badge.title = defaultTitle;
+    }
+  }
+}
+
+function normalizeMouseShortcut(stored) {
+  if (typeof stored === "string") {
+    switch (stored) {
+      case "alt":
+        return { ctrl: false, shift: false, alt: true, disabled: false };
+      case "altShift":
+        return { ctrl: false, shift: true, alt: true, disabled: false };
+      case "ctrlAlt":
+        return { ctrl: true, shift: false, alt: true, disabled: false };
+      case "disabled":
+        return { ctrl: false, shift: false, alt: false, disabled: true };
+      case "ctrlShift":
+      default:
+        return { ctrl: true, shift: true, alt: false, disabled: false };
+    }
+  }
+  if (stored && typeof stored === "object") {
+    return {
+      ctrl: Boolean(stored.ctrl),
+      shift: Boolean(stored.shift),
+      alt: Boolean(stored.alt),
+      disabled: Boolean(stored.disabled)
+    };
+  }
+  return { ...DEFAULT_MOUSE_SHORTCUT };
+}
+
+function updateModifierUI(config) {
+  if (!modCtrl || !modShift || !modAlt) return;
+  modCtrl.checked = Boolean(config.ctrl);
+  modShift.checked = Boolean(config.shift);
+  modAlt.checked = Boolean(config.alt);
+
+  const isDisabled = Boolean(config.disabled);
+  if (shortcutStatusOnBtn && shortcutStatusOffBtn) {
+    shortcutStatusOnBtn.classList.toggle("active", !isDisabled);
+    shortcutStatusOnBtn.setAttribute("aria-checked", String(!isDisabled));
+    shortcutStatusOffBtn.classList.toggle("active", isDisabled);
+    shortcutStatusOffBtn.setAttribute("aria-checked", String(isDisabled));
+  }
+
+  const builderRow = document.getElementById("modifier-builder-row");
+  if (builderRow) {
+    builderRow.classList.toggle("is-disabled", isDisabled);
+  }
+}
+
+async function saveModifierConfig() {
+  if (!modCtrl || !modShift || !modAlt) return;
+  const isOff = shortcutStatusOffBtn ? shortcutStatusOffBtn.classList.contains("active") : false;
+  const config = {
+    ctrl: modCtrl.checked,
+    shift: modShift.checked,
+    alt: modAlt.checked,
+    disabled: isOff
+  };
+
+  const builderRow = document.getElementById("modifier-builder-row");
+  if (builderRow) {
+    builderRow.classList.toggle("is-disabled", config.disabled);
+  }
+
+  if (storageArea) {
+    try {
+      await storageArea.set({ mouseShortcut: config });
+      showStatus("Saved!");
+    } catch (err) {
+      console.error("TST-Lock: Failed to save mouseShortcut:", err);
+      showStatus("Error saving!");
+    }
+  }
+}
+
 async function loadConfig() {
   if (!storageArea) return;
   try {
@@ -364,7 +572,7 @@ async function loadConfig() {
       iconConfig: DEFAULT_CONFIG,
       recentCustomEmojis: [],
       pageTheme: null,
-      previewTheme: null
+      mouseShortcut: DEFAULT_MOUSE_SHORTCUT
     });
     const stored = result.iconConfig || DEFAULT_CONFIG;
     const size = typeof stored.size === "number" ? stored.size : 16;
@@ -373,23 +581,19 @@ async function loadConfig() {
     stored.visibility = visibility;
     currentConfig = stored;
 
+    const mouseShortcut = normalizeMouseShortcut(result.mouseShortcut);
+    updateModifierUI(mouseShortcut);
+    loadKeyboardShortcut();
+
     updateSizeUI(size);
     updateVisibilityUI(visibility);
 
     recentList = Array.isArray(result.recentCustomEmojis) ? result.recentCustomEmojis : [];
     renderRecentChips();
 
-    if (stored.type === "custom-emoji") {
-      if (customInput) {
-        customInput.value = stored.value;
-        const validation = validateCustomInput(stored.value);
-        updateValidationUI(validation);
-      }
-    } else {
-      if (customInput) {
-        const validation = validateCustomInput("");
-        updateValidationUI(validation);
-      }
+    if (customInput) {
+      customInput.value = "";
+      updateValidationUI(validateCustomInput(""));
     }
 
     updatePreview(stored);
@@ -407,17 +611,15 @@ async function loadConfig() {
     }
     applyPageTheme(pageTheme, false);
 
-    let previewTheme = result.previewTheme;
-    if (!previewTheme) {
-      previewTheme = initialThemeFromBrowser;
-      initialSettingsToSave.previewTheme = previewTheme;
-    }
-    setPreviewTheme(previewTheme, false);
-
     if (Object.keys(initialSettingsToSave).length > 0 && storageArea) {
       storageArea.set(initialSettingsToSave).catch((err) => {
         console.warn("TST-Lock: Failed to save initial theme settings:", err);
       });
+    }
+
+    // Clean up legacy previewTheme if present in storage
+    if (storageArea && typeof storageArea.remove === "function") {
+      storageArea.remove("previewTheme").catch(() => {});
     }
 
     // Activate initial tab based on stored setting or previous session tab
@@ -469,10 +671,11 @@ function handleChipClick(event) {
     customInput.value = symbol;
     const validation = validateCustomInput(symbol);
     updateValidationUI(validation);
+    customInput.focus();
   }
 
-  saveConfig({ type: "custom-emoji", value: symbol, size: currentConfig.size || 16 });
-  addRecentCustomEmoji(symbol);
+  // Populate preview so the user can test the idea, but do not change the lock until they click Apply
+  updatePreview({ type: "custom-emoji", value: symbol, size: currentConfig.size || 16 });
 }
 
 function handleRecentChipClick(event) {
@@ -483,9 +686,8 @@ function handleRecentChipClick(event) {
   if (!symbol) return;
 
   if (customInput) {
-    customInput.value = symbol;
-    const validation = validateCustomInput(symbol);
-    updateValidationUI(validation);
+    customInput.value = "";
+    updateValidationUI(validateCustomInput(""));
   }
 
   saveConfig({ type: "custom-emoji", value: symbol, size: currentConfig.size || 16 });
@@ -511,8 +713,8 @@ function handleCustomInput() {
   // If user entered a valid single symbol, show it in live preview right away
   if (validation.valid) {
     updatePreview({ type: "custom-emoji", value: validation.symbol, size: currentConfig.size || 16 });
-  } else if (!validation.isEmpty) {
-    // Revert preview to current active config if input is invalid
+  } else {
+    // Revert preview to current active config if input is invalid or cleared
     updatePreview(currentConfig);
   }
 }
@@ -527,9 +729,12 @@ function handleApplyCustom() {
     return;
   }
 
-  customInput.value = validation.symbol;
   saveConfig({ type: "custom-emoji", value: validation.symbol, size: currentConfig.size || 16 });
   addRecentCustomEmoji(validation.symbol);
+
+  // Clear input field and reset validation hint after applying
+  customInput.value = "";
+  updateValidationUI(validateCustomInput(""));
 }
 
 function handleReset() {
@@ -539,43 +744,23 @@ function handleReset() {
   }
   updateSizeUI(DEFAULT_CONFIG.size);
   updateVisibilityUI(DEFAULT_CONFIG.visibility);
+  updateModifierUI(DEFAULT_MOUSE_SHORTCUT);
+  if (storageArea) {
+    storageArea.set({ mouseShortcut: DEFAULT_MOUSE_SHORTCUT }).catch((err) => {
+      console.warn("TST-Lock: Failed to reset mouseShortcut:", err);
+    });
+  }
   switchTab("presets", true);
   saveConfig(DEFAULT_CONFIG);
 }
 
-let currentPreviewTheme = "light";
-
-function setPreviewTheme(mode, save = false) {
-  if (!mockTabContainer) return;
-  currentPreviewTheme = mode === "dark" ? "dark" : "light";
-  const isDark = currentPreviewTheme === "dark";
-  document.querySelectorAll(".theme-toggle-btn").forEach((b) => {
-    b.classList.toggle("active", b.getAttribute("data-preview-theme") === (isDark ? "dark" : "light"));
-  });
-
-  mockTabContainer.classList.remove("theme-light", "theme-dark");
-  mockTabContainer.classList.add(isDark ? "theme-dark" : "theme-light");
-
-  if (save && storageArea) {
-    storageArea.set({ previewTheme: currentPreviewTheme }).catch((err) => {
-      console.warn("TST-Lock: Failed to save previewTheme:", err);
-    });
-  }
-}
-
-function handleThemeToggle(event) {
-  const btn = event.target.closest(".theme-toggle-btn");
-  if (!btn) return;
-  setPreviewTheme(btn.getAttribute("data-preview-theme"), true);
-}
-
-document.addEventListener("DOMContentLoaded", () => {
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => {
   tabNavBtns = Array.from(document.querySelectorAll(".tab-nav-btn"));
   tabPanels = Array.from(document.querySelectorAll(".tab-panel"));
 
   const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
   applyPageTheme(prefersDark ? "dark" : "light", false);
-  setPreviewTheme(prefersDark ? "dark" : "light", false);
 
   if (pageThemeBtn) {
     pageThemeBtn.addEventListener("click", handlePageThemeToggle);
@@ -585,7 +770,6 @@ document.addEventListener("DOMContentLoaded", () => {
     tabNav.addEventListener("click", handleTabClick);
     tabNav.addEventListener("keydown", handleTabKeydown);
   }
-  if (themeToggleGroup) themeToggleGroup.addEventListener("click", handleThemeToggle);
   if (sizeSlider) {
     sizeSlider.addEventListener("input", () => handleSizeChange(sizeSlider.value, false));
     sizeSlider.addEventListener("change", () => handleSizeChange(sizeSlider.value, true));
@@ -624,17 +808,76 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  applyPlatformLabels();
+
+  if (mouseShortcutToggleGroup) {
+    mouseShortcutToggleGroup.addEventListener("click", (event) => {
+      const btn = event.target.closest(".status-btn");
+      if (!btn) return;
+      const status = btn.getAttribute("data-status");
+      const isOff = status === "off";
+
+      if (!isOff) {
+        // If turning ON and all modifiers are unchecked, restore default Ctrl + Shift
+        if (!modCtrl.checked && !modShift.checked && !modAlt.checked) {
+          if (modCtrl) modCtrl.checked = true;
+          if (modShift) modShift.checked = true;
+        }
+      }
+
+      if (shortcutStatusOnBtn && shortcutStatusOffBtn) {
+        shortcutStatusOnBtn.classList.toggle("active", !isOff);
+        shortcutStatusOnBtn.setAttribute("aria-checked", String(!isOff));
+        shortcutStatusOffBtn.classList.toggle("active", isOff);
+        shortcutStatusOffBtn.setAttribute("aria-checked", String(isOff));
+      }
+      saveModifierConfig();
+    });
+  }
+
+  [modCtrl, modShift, modAlt].forEach((input) => {
+    if (!input) return;
+    input.addEventListener("change", () => {
+      // If user checks a modifier while in Off state, toggle to On
+      if (input.checked && shortcutStatusOnBtn && shortcutStatusOffBtn) {
+        shortcutStatusOnBtn.classList.add("active");
+        shortcutStatusOnBtn.setAttribute("aria-checked", "true");
+        shortcutStatusOffBtn.classList.remove("active");
+        shortcutStatusOffBtn.setAttribute("aria-checked", "false");
+      }
+      // If user unchecks all modifiers, automatically toggle to Off
+      if (!modCtrl.checked && !modShift.checked && !modAlt.checked) {
+        if (shortcutStatusOnBtn && shortcutStatusOffBtn) {
+          shortcutStatusOnBtn.classList.remove("active");
+          shortcutStatusOnBtn.setAttribute("aria-checked", "false");
+          shortcutStatusOffBtn.classList.add("active");
+          shortcutStatusOffBtn.setAttribute("aria-checked", "true");
+        }
+      }
+      saveModifierConfig();
+    });
+  });
+
   if (openTabBtn) {
     openTabBtn.addEventListener("click", () => {
       const url = (typeof browser !== "undefined" && browser.runtime && browser.runtime.getURL)
         ? browser.runtime.getURL("options/options.html")
         : "options.html";
-      window.open(url, "_blank");
+
+      if (typeof browser !== "undefined" && browser.tabs && browser.tabs.create) {
+        browser.tabs.create({ url }).finally(() => {
+          window.close();
+        });
+      } else {
+        window.open(url, "_blank");
+        window.close();
+      }
     });
   }
 
   loadConfig();
-});
+  });
+}
 
 if (typeof browser !== "undefined" && browser.storage && browser.storage.onChanged) {
   browser.storage.onChanged.addListener((changes) => {
@@ -642,9 +885,19 @@ if (typeof browser !== "undefined" && browser.storage && browser.storage.onChang
       if (changes.pageTheme && changes.pageTheme.newValue) {
         applyPageTheme(changes.pageTheme.newValue, false);
       }
-      if (changes.previewTheme && changes.previewTheme.newValue) {
-        setPreviewTheme(changes.previewTheme.newValue, false);
-      }
     }
   });
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    DEFAULT_CONFIG,
+    DEFAULT_MOUSE_SHORTCUT,
+    isMac,
+    formatShortcutForDisplay,
+    loadKeyboardShortcut,
+    applyPlatformLabels,
+    normalizeMouseShortcut,
+    validateCustomInput
+  };
 }

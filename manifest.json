@@ -12,8 +12,18 @@
   "permissions": [
     "sessions",
     "tabs",
-    "storage"
+    "storage",
+    "menus"
   ],
+  "commands": {
+    "toggle-tab-lock": {
+      "suggested_key": {
+        "default": "Ctrl+Alt+L",
+        "mac": "Alt+Command+L"
+      },
+      "description": "Toggle lock state of active tab"
+    }
+  },
   "options_ui": {
     "page": "options/options.html",
     "open_in_tab": false
