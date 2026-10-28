@@ -8,6 +8,8 @@ module.exports = {
     'package.json',
     'package-lock.json',
     'web-ext-config.cjs',
+    'screenshots',
+    'screenshots/**',
     'tests',
     'tests/**',
     'web-ext-artifacts/**',
@@ -18,4 +20,3 @@ module.exports = {
     filename: 'TST-Lock.xpi'
   }
 };
-
