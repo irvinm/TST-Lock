@@ -48,7 +48,7 @@ In my screenshot example on AMO, I used the following CSS to customize to my lik
 ## Version History
 
 <details open>
-<summary><b>Version 1.2.0 (October 4, 2026) - Customization Options, Shortcuts & Batch Locking</b></summary>
+<summary><b>Version 1.2.0 (October 27, 2026) - Customization Options, Shortcuts & Batch Locking</b></summary>
 
 - **Visual Customization UI**: Added a dedicated Options page and popup interface with preset/bundled lock icons, custom emoji/Unicode input, interactive 12px–24px size slider, and live tab preview on light/dark backgrounds.
 - **Lock Visibility Modes**: Added support for choosing between always visible and hover-only lock display.
@@ -58,11 +58,13 @@ In my screenshot example on AMO, I used the following CSS to customize to my lik
 - **Multi-Tab Batch Locking**: Added support for locking or unlocking multiple selected/highlighted tabs simultaneously across mouse clicks, context menu actions, and keyboard shortcuts.
 - **Cross-Window Drag & Tab Attachment**: Automatically re-applies tab lock states to Tree Style Tab when tabs are moved across windows or restored from previous sessions.
 - **Theme Synchronization**: Added dark/light theme switching for the Options page and automatic theme preference persistence.
+- **Update Welcome Notice**: Added a one-time update notice tab upon upgrading to v1.2.0 to introduce existing users to new configuration options and shortcut controls.
 - **Console Spam Reduction**: Eliminated repetitive event logging on mouse movements and handled expected promise rejections on restricted browser pages (such as `about:` URLs).
 - **Diagnostic Logging**: Added structured `console.warn` diagnostics for failed TST communications or storage errors, along with explicit logs when middle-click close is prevented on locked tabs or when locked tabs are closed externally.
 - **Startup Performance & Badge Sync**: Concurrently loaded tab lock states via `Promise.all()` during startup, eliminated badge UI thrashing, and ensured the badge counter stays synchronized when locked tabs are closed externally.
 - **Security Hardening**: Enforced strict sender verification on all incoming external messages to ensure they originate only from Tree Style Tab.
 - **Event-Driven Architecture**: Replaced active polling with a robust, event-driven lifecycle supporting TST restarts and shutdowns.
+- **Platform Baseline**: Established minimum required browser version as Firefox 115+ (ESR) for modern WebExtension API compatibility.
 - **Test Suite & Build Modernization**: Added a comprehensive Jest unit test suite and standardized `web-ext` build automation.
 
 </details>

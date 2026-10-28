@@ -496,6 +496,26 @@ describe("TST-Lock Background Script", () => {
       expect(mockStorageLocalSet).toHaveBeenCalledWith(expect.objectContaining({ lastSeenVersion: "1.2.0" }));
     });
 
+    it("should open update.html on upgrade from older version with empty storage (e.g. v1.1.7)", async () => {
+      mockStorageLocalGet.mockResolvedValueOnce({}); // Older versions had no update storage keys
+
+      require("../background.js");
+      await Promise.resolve();
+
+      expect(installedCallback).toBeDefined();
+      mockTabsCreate.mockClear();
+
+      await installedCallback({ reason: "update", previousVersion: "1.1.7" });
+
+      expect(mockTabsCreate).toHaveBeenCalledWith({
+        url: "moz-extension://test-uuid/options/update.html"
+      });
+      expect(mockStorageLocalSet).toHaveBeenCalledWith({
+        hasSeenUpdatePage: true,
+        lastSeenVersion: "1.2.0"
+      });
+    });
+
     it("should not open update.html tab on initial install", async () => {
       require("../background.js");
       await Promise.resolve();
