@@ -10,6 +10,9 @@
 
 This project extends "Tree Style Tab" to help prevent users from accidentally closing tabs via the "X" for tabs that you consider important.
 
+### View in Tree Style Tab
+<img src="https://github.com/user-attachments/assets/1313b216-e7da-4eee-84a5-4ab331386834" alt="TST Lock in Tree Style Tab" />
+
 ### How to Toggle Lock State
 
 You can lock or unlock tabs in three convenient ways:
@@ -19,23 +22,39 @@ You can lock or unlock tabs in three convenient ways:
 3. **Firefox Keyboard Shortcut**: Press `Ctrl + Alt + L` (`⌥ + ⌘ + L` / `Option + Command + L` on macOS, customizable via Firefox's standard shortcut manager at `about:addons` ➔ ⚙️ ➔ *Manage Extension Shortcuts*) to toggle the lock state of the currently active tab (or all selected tabs).
 
 ### Multi-Tab Batch Locking
+
 If multiple tabs are selected/highlighted, triggering any lock action (keyboard shortcut, context menu, or mouse click) will batch lock or unlock all selected tabs simultaneously. If any tab in the selection is unlocked, all selected tabs will be locked; if all are already locked, they will all be unlocked.
 
 When locked, the tab's close button is replaced with a non-interactive lock graphic. (Simply repeat any toggle action to unlock it back to the normal "X"). You can still close a locked tab if needed by right-clicking on the tab and selecting "Close Tab".
 
-Original TST discussion: https://github.com/piroor/treestyletab/issues/2104
+### Visual Customization (No CSS Required)
 
-Current defect/enhancement requests: https://github.com/irvinm/TST-Lock/issues
+Configure lock icons easily without writing custom CSS. Open settings by clicking the **TST Lock toolbar icon** or navigating to `about:addons`:
 
-------
+* **Preset & Bundled Icons**: Choose from classic bundled padlock styles or one-click emoji presets (📌, ⭐️, 🛡️).
+* **Custom Emoji / Unicode**: Type any single custom emoji or Unicode character to use as your lock indicator.
+* **Adjustable Sizing**: Scale indicator dimensions from 12px to 24px (16px default) with a responsive slider to match your tab bar density.
+* **Hover-Only Visibility**: Keep tab rows minimal by showing lock indicators only when hovering over a tab.
+* **Dual Live Tab Preview**: Test your custom styles in real time against simulated light and dark tab themes before saving.
 
-### View (Windows 11 - Firefox Nova)
-<img src="https://github.com/user-attachments/assets/1313b216-e7da-4eee-84a5-4ab331386834" />
+| Preset & Bundled Indicators | Custom Unicode & Sizing |
+| :---: | :---: |
+| <img src="screenshots/preset-emojis.png" width="380" alt="Preset Emojis" /> | <img src="screenshots/custom-graphics.png" width="380" alt="Custom Graphics & Live Preview" /> |
 
-### Customization
-You can also change how the lock graphic is sized and positioned by using TST CSS. Below is an example.
+### Mouse & Keyboard Preferences
 
-```
+Customize how you interact with tabs directly from the **Shortcuts** settings tab:
+
+<img src="screenshots/shortcuts-settings.png" width="380" alt="Shortcut Settings" />
+
+* **Custom Mouse Modifiers**: Choose any modifier combination (`Ctrl` / `Cmd ⌘`, `Shift`, `Alt` / `Option ⌥`) for left-clicking tabs in the Tree Style Tab sidebar, or disable mouse clicks completely.
+* **Keyboard Shortcut Remapping**: Use `Ctrl + Alt + L` (`⌥ + ⌘ + L` on macOS) by default, or remap it to any preferred key combination via Firefox's native shortcut manager (`about:addons` ➔ ⚙️ ➔ *Manage Extension Shortcuts*).
+
+### Advanced Customization (Optional TST CSS)
+
+For power users who wish to further tweak icon positioning, scaling, or spacing via Tree Style Tab's Advanced settings:
+
+```css
 #tabbar tab-item.locked tab-closebox {
   display: initial;
   height: 36px;
@@ -44,6 +63,11 @@ You can also change how the lock graphic is sized and positioned by using TST CS
   opacity: 1 !important;
 }
 ```
+
+### Feedback & Support
+
+* [Original TST discussion](https://github.com/piroor/treestyletab/issues/2104)
+* [Issue tracker & feature requests](https://github.com/irvinm/TST-Lock/issues)
 
 ## Version History
 
