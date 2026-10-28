@@ -4,41 +4,36 @@
   "description": "Lock important tabs from being accidentally closed.",
   "main": "background.js",
   "scripts": {
-    "build": "web-ext build",
+    "build": "web-ext build && node -e \"const fs=require('fs'); if (process.platform !== 'win32' && fs.existsSync('web-ext-artifacts/tst-lock.xpi')) fs.copyFileSync('web-ext-artifacts/tst-lock.xpi', 'web-ext-artifacts/TST-Lock.xpi');\"",
     "lint": "web-ext lint",
     "start": "web-ext run",
     "test": "jest"
   },
-  "webExt": {
-    "ignoreFiles": [
-      "package.json",
-      "package-lock.json",
-      "tests",
-      "MakeXPI.bat",
-      "makefile",
-      ".github",
-      ".vscode",
-      ".gemini",
-      ".agents",
-      ".specify",
-      "GEMINI.md",
-      "README.md",
-      "LICENSE"
-    ],
-    "build": {
-      "overwriteDest": true,
-      "filename": "TST-Lock.xpi"
-    }
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/irvinm/TST-Lock.git"
+  },
+  "author": "Michael C. Irvin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/irvinm/TST-Lock/issues"
+  },
+  "homepage": "https://github.com/irvinm/TST-Lock#readme",
+  "engines": {
+    "node": ">=20.0.0"
   },
   "devDependencies": {
     "jest": "^30.5.2",
-    "web-ext": "^10.6.0"
+    "web-ext": "^10.8.0"
   },
   "overrides": {
-    "adm-zip": "^0.6.0",
+    "adm-zip": "^0.6.1",
     "brace-expansion": "^5.0.8",
-    "fast-uri": "^3.1.4",
+    "fast-uri": "^3.1.9",
     "js-yaml": "^4.3.0",
-    "shell-quote": "^1.8.5"
+    "node-forge": "^1.4.2",
+    "shell-quote": "^1.10.1",
+    "source-map-js": "^1.2.2",
+    "undici": "^7.30.1"
   }
 }
