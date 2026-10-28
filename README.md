@@ -29,9 +29,11 @@ Current defect/enhancement requests: https://github.com/irvinm/TST-Lock/issues
 
 ------
 
-You can change how the lock graphic is sized and positioned by using TST CSS.
+### View (Windows 11 - Firefox Nova)
+<img src="https://github.com/user-attachments/assets/1313b216-e7da-4eee-84a5-4ab331386834" />
 
-In my screenshot example on AMO, I used the following CSS to customize to my liking:
+### Customization
+You can also change how the lock graphic is sized and positioned by using TST CSS. Below is an example.
 
 ```
 #tabbar tab-item.locked tab-closebox {
@@ -42,8 +44,6 @@ In my screenshot example on AMO, I used the following CSS to customize to my lik
   opacity: 1 !important;
 }
 ```
-
-![2022-04-18_19-35-23](https://user-images.githubusercontent.com/979729/163903182-23db7fe1-c8b0-42f1-a151-58212fb9897e.png)
 
 ## Version History
 
